@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <title>Qualys Schedule - Reports</title>
+    <style>
+        :root {
+            --bg-primary: #f5f7fa; --bg-secondary: #ffffff; --bg-card: #ffffff;
+            --text-primary: #1a1a2e; --text-secondary: #555770; --text-muted: #8e8ea0;
+            --border: #e2e4e9; --accent: #4f46e5; --accent-light: #e0e7ff;
+            --success: #059669; --success-light: #d1fae5;
+            --warning: #d97706; --warning-light: #fef3c7;
+            --danger: #dc2626; --danger-light: #fee2e2;
+            --info: #2563eb; --info-light: #dbeafe;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-lg: 0 4px 12px rgba(0,0,0,0.1); --radius: 10px;
+        }
+        [data-theme="dark"] {
+            --bg-primary: #0f0f1a; --bg-secondary: #1a1a2e; --bg-card: #16213e;
+            --text-primary: #e2e8f0; --text-secondary: #a0aec0; --text-muted: #718096;
+            --border: #2d3748; --accent: #818cf8; --accent-light: #1e1b4b;
+            --success: #34d399; --success-light: #064e3b;
+            --warning: #fbbf24; --warning-light: #78350f;
+            --danger: #f87171; --danger-light: #7f1d1d;
+            --info: #60a5fa; --info-light: #1e3a5f;
+            --shadow: 0 1px 3px rgba(0,0,0,0.3); --shadow-lg: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; transition: background 0.3s ease, color 0.3s ease; }
+
+        .header { background: var(--bg-secondary); border-bottom: 1px solid var(--border); padding: 12px 32px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
+        .header-left { display: flex; align-items: center; gap: 10px; }
+        .header-logo { width: 32px; height: 32px; background: var(--accent); border-radius: 7px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px; }
+        .header h1 { font-size: 17px; font-weight: 700; }
+        .header h1 span { color: var(--accent); }
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        .theme-toggle { background: var(--bg-primary); border: 1px solid var(--border); border-radius: 20px; padding: 3px; cursor: pointer; display: flex; align-items: center; width: 48px; height: 26px; position: relative; transition: background 0.3s; }
+        .theme-toggle .toggle-thumb { width: 20px; height: 20px; border-radius: 50%; background: var(--accent); position: absolute; left: 3px; transition: transform 0.3s ease; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+        [data-theme="dark"] .theme-toggle .toggle-thumb { transform: translateX(22px); }
+        .nav-links { display: flex; gap: 4px; margin-left: 16px; }
+        .nav-links a { padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--text-secondary); text-decoration: none; transition: all 0.15s; }
+        .nav-links a:hover { background: var(--accent-light); color: var(--accent); }
+        .nav-links a.active { background: var(--accent); color: #fff; }
+
+        .main { max-width: 1400px; margin: 0 auto; padding: 20px 32px; }
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; box-shadow: var(--shadow); transition: background 0.3s, border-color 0.3s; }
+        .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
+        .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); }
+        .section-count { font-size: 11px; background: var(--accent-light); color: var(--accent); padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+
+        .toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .form-input { padding: 7px 12px; font-size: 13px; font-family: inherit; border: 1px solid var(--border); border-radius: 7px; background: var(--bg-primary); color: var(--text-primary); outline: none; transition: border-color 0.2s; }
+        .form-input:focus { border-color: var(--accent); }
+        .form-input::placeholder { color: var(--text-muted); }
+        .form-select { padding: 7px 12px; font-size: 13px; font-family: inherit; border: 1px solid var(--border); border-radius: 7px; background: var(--bg-primary); color: var(--text-primary); outline: none; cursor: pointer; }
+
+        .btn-sm { display: inline-flex; align-items: center; gap: 4px; padding: 5px 12px; font-size: 12px; font-weight: 600; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: all 0.15s; background: var(--bg-secondary); color: var(--text-secondary); }
+        .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+        .btn-sm:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-sm.btn-accent { border-color: var(--accent); color: #fff; background: var(--accent); }
+        .btn-sm.btn-accent:hover { opacity: 0.9; }
+        .btn-sm.btn-success { border-color: var(--success); color: var(--success); background: var(--success-light); }
+        .btn-sm.btn-info { border-color: var(--info); color: var(--info); background: var(--info-light); }
+
+        .data-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .data-table th { text-align: left; padding: 10px 12px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); border-bottom: 2px solid var(--border); font-weight: 600; cursor: pointer; user-select: none; white-space: nowrap; }
+        .data-table th:hover { color: var(--accent); }
+        .data-table th .sort-icon { margin-left: 4px; font-size: 10px; }
+        .data-table td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid var(--border); }
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table tr:hover td { background: var(--accent-light); }
+        .data-table .file-name { font-family: 'Cascadia Code', 'Consolas', monospace; font-size: 12px; word-break: break-all; }
+        .data-table .file-actions { display: flex; gap: 6px; }
+
+        .type-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+        .type-badge.pdf { background: var(--danger-light); color: var(--danger); }
+        .type-badge.csv { background: var(--success-light); color: var(--success); }
+
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; color: var(--text-muted); font-size: 14px; gap: 8px; }
+        .empty-state .icon { font-size: 40px; opacity: 0.4; }
+
+        .stats-bar { display: flex; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+        .stat-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; min-width: 140px; box-shadow: var(--shadow); }
+        .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+        .stat-value { font-size: 22px; font-weight: 700; color: var(--text-primary); margin-top: 2px; }
+        .stat-value.accent { color: var(--accent); }
+
+        .select-all-bar { display: flex; align-items: center; gap: 12px; padding: 8px 0; margin-bottom: 4px; border-bottom: 1px solid var(--border); }
+        .select-all-bar label { font-size: 12px; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 6px; }
+
+        @media (max-width: 768px) {
+            .main { padding: 12px 16px; }
+            .header { padding: 10px 16px; }
+            .stats-bar { flex-direction: column; }
+            .toolbar { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <div class="header-logo">Q</div>
+            <h1>Qualys <span>Schedule</span></h1>
+            <div class="nav-links">
+                <a href="/">Dashboard</a>
+                <a href="/historico.html">Historico</a>
+                <a href="/vulns.html">Vulns</a>
+                <a href="/reports.html" class="active">Reports</a>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
+                <div class="toggle-thumb" id="themeIcon"></div>
+            </button>
+        </div>
+    </header>
+
+    <div class="main">
+        <!-- Stats -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-label">Total Arquivos</div>
+                <div class="stat-value accent" id="totalFiles">--</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">PDFs</div>
+                <div class="stat-value" id="totalPdfs" style="color: var(--danger)">--</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">CSVs</div>
+                <div class="stat-value" id="totalCsvs" style="color: var(--success)">--</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Tamanho Total</div>
+                <div class="stat-value" id="totalSize">--</div>
+            </div>
+        </div>
+
+        <!-- Tabela -->
+        <div class="card">
+            <div class="section-header">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span class="section-title">Arquivos de Report</span>
+                    <span class="section-count" id="fileCount">0</span>
+                </div>
+                <div class="toolbar">
+                    <input type="text" class="form-input" id="searchInput" placeholder="Buscar arquivo..." style="width:220px;" oninput="applyFilters()">
+                    <select class="form-select" id="typeFilter" onchange="applyFilters()">
+                        <option value="all">Todos</option>
+                        <option value="pdf">PDF</option>
+                        <option value="csv">CSV</option>
+                    </select>
+                    <button class="btn-sm" onclick="loadFiles()" title="Atualizar lista">Atualizar</button>
+                    <button class="btn-sm btn-accent" id="btnDownloadSelected" onclick="downloadSelected()" disabled>Baixar Selecionados</button>
+                </div>
+            </div>
+
+            <div class="select-all-bar" id="selectAllBar" style="display:none;">
+                <label>
+                    <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                    Selecionar todos
+                </label>
+                <span id="selectedCount" style="font-size:12px;color:var(--text-muted);"></span>
+            </div>
+
+            <div id="tableContainer">
+                <div class="empty-state">
+                    <div class="icon">&#128194;</div>
+                    <div>Carregando arquivos...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+/* ── CSRF Token ─────────────────────────────────────────── */
+var _csrfToken = '';
+(async function() {
+    try {
+        var res = await fetch('/api/csrf-token');
+        var data = await res.json();
+        if (data.ok) _csrfToken = data.token;
+    } catch(e) {}
+})();
+
+/* ── Estado ─────────────────────────────────────────────── */
+let allFiles = [];
+let filteredFiles = [];
+let selectedFiles = new Set();
+let sortCol = 'modified';
+let sortAsc = false;
+
+/* ── Tema ───────────────────────────────────────────────── */
+function toggleTheme() {
+    const html = document.documentElement;
+    const curr = html.getAttribute('data-theme');
+    const next = curr === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    updateThemeIcon();
+}
+function updateThemeIcon() {
+    const icon = document.getElementById('themeIcon');
+    if (icon) icon.textContent = document.documentElement.getAttribute('data-theme') === 'dark' ? '\u263E' : '\u2600';
+}
+(function() {
+    const saved = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', saved);
+    updateThemeIcon();
+})();
+
+/* ── Helpers ────────────────────────────────────────────── */
+function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
+function formatDate(timestamp) {
+    const d = new Date(timestamp * 1000);
+    const pad = n => String(n).padStart(2, '0');
+    return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/* ── API ────────────────────────────────────────────────── */
+async function loadFiles() {
+    try {
+        const res = await fetch('/api/files/list');
+        const data = await res.json();
+        if (data.ok) {
+            allFiles = data.files;
+            selectedFiles.clear();
+            applyFilters();
+        }
+    } catch (e) {
+        document.getElementById('tableContainer').innerHTML =
+            '<div class="empty-state"><div class="icon">&#9888;</div><div>Erro ao carregar arquivos</div></div>';
+    }
+}
+
+function applyFilters() {
+    const search = document.getElementById('searchInput').value.toLowerCase().trim();
+    const type = document.getElementById('typeFilter').value;
+
+    filteredFiles = allFiles.filter(f => {
+        if (type !== 'all' && f.type !== type) return false;
+        if (search && !f.name.toLowerCase().includes(search)) return false;
+        return true;
+    });
+
+    sortFiles();
+    renderTable();
+    updateStats();
+}
+
+function sortFiles() {
+    filteredFiles.sort((a, b) => {
+        let va = a[sortCol], vb = b[sortCol];
+        if (typeof va === 'string') { va = va.toLowerCase(); vb = vb.toLowerCase(); }
+        if (va < vb) return sortAsc ? -1 : 1;
+        if (va > vb) return sortAsc ? 1 : -1;
+        return 0;
+    });
+}
+
+function changeSort(col) {
+    if (sortCol === col) { sortAsc = !sortAsc; }
+    else { sortCol = col; sortAsc = col === 'name'; }
+    applyFilters();
+}
+
+function updateStats() {
+    const pdfs = allFiles.filter(f => f.type === 'pdf');
+    const csvs = allFiles.filter(f => f.type === 'csv');
+    const totalBytes = allFiles.reduce((s, f) => s + f.size, 0);
+
+    document.getElementById('totalFiles').textContent = allFiles.length;
+    document.getElementById('totalPdfs').textContent = pdfs.length;
+    document.getElementById('totalCsvs').textContent = csvs.length;
+    document.getElementById('totalSize').textContent = formatSize(totalBytes);
+    document.getElementById('fileCount').textContent = filteredFiles.length;
+}
+
+/* ── Render ──────────────────────────────────────────────── */
+function sortIndicator(col) {
+    if (sortCol !== col) return '';
+    return '<span class="sort-icon">' + (sortAsc ? '\u25B2' : '\u25BC') + '</span>';
+}
+
+function renderTable() {
+    const container = document.getElementById('tableContainer');
+    const selectAllBar = document.getElementById('selectAllBar');
+
+    if (filteredFiles.length === 0) {
+        selectAllBar.style.display = 'none';
+        container.innerHTML = '<div class="empty-state"><div class="icon">&#128194;</div><div>Nenhum arquivo encontrado</div></div>';
+        updateSelectionUI();
+        return;
+    }
+
+    selectAllBar.style.display = 'flex';
+
+    let html = '<table class="data-table"><thead><tr>';
+    html += '<th style="width:36px;"><input type="checkbox" id="selectAllHead" onchange="toggleSelectAll()" ' + (selectedFiles.size === filteredFiles.length && filteredFiles.length > 0 ? 'checked' : '') + '></th>';
+    html += '<th onclick="changeSort(\'name\')">Arquivo' + sortIndicator('name') + '</th>';
+    html += '<th onclick="changeSort(\'type\')" style="width:70px;">Tipo' + sortIndicator('type') + '</th>';
+    html += '<th onclick="changeSort(\'size\')" style="width:100px;">Tamanho' + sortIndicator('size') + '</th>';
+    html += '<th onclick="changeSort(\'modified\')" style="width:150px;">Modificado' + sortIndicator('modified') + '</th>';
+    html += '<th style="width:100px;">Acao</th>';
+    html += '</tr></thead><tbody>';
+
+    for (const f of filteredFiles) {
+        const checked = selectedFiles.has(f.name) ? 'checked' : '';
+        const typeBadge = f.type === 'pdf'
+            ? '<span class="type-badge pdf">PDF</span>'
+            : '<span class="type-badge csv">CSV</span>';
+
+        html += '<tr>';
+        html += '<td><input type="checkbox" class="file-check" data-name="' + escapeAttr(f.name) + '" ' + checked + ' onchange="toggleFile(this)"></td>';
+        html += '<td class="file-name">' + escapeHtml(f.name) + '</td>';
+        html += '<td>' + typeBadge + '</td>';
+        html += '<td>' + formatSize(f.size) + '</td>';
+        html += '<td>' + formatDate(f.modified) + '</td>';
+        html += '<td class="file-actions"><button class="btn-sm btn-info" onclick="downloadFile(\'' + escapeAttr(f.name) + '\')">Baixar</button></td>';
+        html += '</tr>';
+    }
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+    updateSelectionUI();
+}
+
+function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+}
+
+function escapeAttr(str) {
+    return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+/* ── Selecao ─────────────────────────────────────────────── */
+function toggleFile(cb) {
+    const name = cb.dataset.name;
+    if (cb.checked) selectedFiles.add(name);
+    else selectedFiles.delete(name);
+    updateSelectionUI();
+}
+
+function toggleSelectAll() {
+    const allChecked = selectedFiles.size === filteredFiles.length && filteredFiles.length > 0;
+    if (allChecked) {
+        selectedFiles.clear();
+    } else {
+        filteredFiles.forEach(f => selectedFiles.add(f.name));
+    }
+    renderTable();
+}
+
+function updateSelectionUI() {
+    const btn = document.getElementById('btnDownloadSelected');
+    const count = document.getElementById('selectedCount');
+    const selectAllCb = document.getElementById('selectAll');
+    const selectAllHead = document.getElementById('selectAllHead');
+    const n = selectedFiles.size;
+    btn.disabled = n === 0;
+    btn.textContent = n > 0 ? 'Baixar Selecionados (' + n + ')' : 'Baixar Selecionados';
+    count.textContent = n > 0 ? n + ' selecionado(s)' : '';
+    const allChecked = n === filteredFiles.length && filteredFiles.length > 0;
+    if (selectAllCb) selectAllCb.checked = allChecked;
+    if (selectAllHead) selectAllHead.checked = allChecked;
+}
+
+/* ── Downloads ───────────────────────────────────────────── */
+function downloadFile(name) {
+    const a = document.createElement('a');
+    a.href = '/api/files/download/' + encodeURIComponent(name);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+function downloadSelected() {
+    if (selectedFiles.size === 0) return;
+    // Baixar um por um com intervalo para evitar bloqueio do browser
+    const files = Array.from(selectedFiles);
+    let i = 0;
+    function next() {
+        if (i >= files.length) return;
+        downloadFile(files[i]);
+        i++;
+        if (i < files.length) setTimeout(next, 300);
+    }
+    next();
+}
+
+/* ── Init ───────────────────────────────────────────────── */
+loadFiles();
+// Auto-refresh a cada 30 segundos
+setInterval(loadFiles, 30000);
+</script>
+</body>
+</html>

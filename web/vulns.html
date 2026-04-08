@@ -1,0 +1,2025 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <title>Qualys Schedule - Dashboard Vulns</title>
+    <style>
+        :root {
+            --bg-primary: #f5f7fa;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #555770;
+            --text-muted: #8e8ea0;
+            --border: #e2e4e9;
+            --accent: #4f46e5;
+            --accent-light: #e0e7ff;
+            --success: #059669;
+            --success-light: #d1fae5;
+            --warning: #d97706;
+            --warning-light: #fef3c7;
+            --danger: #dc2626;
+            --danger-light: #fee2e2;
+            --info: #2563eb;
+            --info-light: #dbeafe;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-lg: 0 4px 12px rgba(0,0,0,0.1);
+            --radius: 10px;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --text-primary: #e2e8f0;
+            --text-secondary: #a0aec0;
+            --text-muted: #718096;
+            --border: #2d3748;
+            --accent: #818cf8;
+            --accent-light: #1e1b4b;
+            --success: #34d399;
+            --success-light: #064e3b;
+            --warning: #fbbf24;
+            --warning-light: #78350f;
+            --danger: #f87171;
+            --danger-light: #7f1d1d;
+            --info: #60a5fa;
+            --info-light: #1e3a5f;
+            --shadow: 0 1px 3px rgba(0,0,0,0.3);
+            --shadow-lg: 0 4px 12px rgba(0,0,0,0.4);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        /* ── Header ────────────────────────────────────────── */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .header-logo {
+            width: 32px; height: 32px; border-radius: 8px;
+            background: var(--accent); color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 16px;
+        }
+        .header h1 { font-size: 16px; font-weight: 700; color: var(--text-primary); }
+        .header h1 span { font-weight: 400; color: var(--text-secondary); }
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        .status-badge {
+            display: flex; align-items: center; gap: 6px;
+            padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+            background: var(--bg-primary); border: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        .status-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); }
+        .status-badge.online .dot { background: var(--success); }
+        .theme-toggle { background: var(--bg-primary); border: 1px solid var(--border); border-radius: 20px; padding: 3px; cursor: pointer; display: flex; align-items: center; width: 48px; height: 26px; position: relative; transition: background 0.3s; }
+        .theme-toggle .toggle-thumb { width: 20px; height: 20px; border-radius: 50%; background: var(--accent); position: absolute; left: 3px; transition: transform 0.3s ease; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+        [data-theme="dark"] .theme-toggle .toggle-thumb { transform: translateX(22px); }
+        .nav-links { display: flex; gap: 4px; margin-left: 16px; }
+        .nav-links a { padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; color: var(--text-secondary); text-decoration: none; transition: all 0.15s; }
+        .nav-links a:hover { background: var(--accent-light); color: var(--accent); }
+        .nav-links a.active { background: var(--accent); color: #fff; }
+
+        /* ── Main ──────────────────────────────────────────── */
+        .main { max-width: 1400px; margin: 0 auto; padding: 20px 32px; }
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; box-shadow: var(--shadow); transition: background 0.3s, border-color 0.3s; }
+        .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); }
+
+        /* ── Empty State ───────────────────────────────────── */
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
+        .empty-icon { font-size: 48px; display: block; margin-bottom: 12px; opacity: 0.5; }
+        .empty-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; color: var(--text-secondary); }
+        .empty-desc { font-size: 13px; }
+
+        /* ── Summary Cards ─────────────────────────────────── */
+        .summary-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 16px; }
+        .summary-card { text-align: center; padding: 14px 10px; }
+        .summary-card .card-value { font-size: 28px; font-weight: 800; line-height: 1; }
+        .summary-card .card-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-top: 4px; }
+        .summary-card .card-sub { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+        /* ── Filters ───────────────────────────────────────── */
+        .filters-bar { margin-bottom: 16px; }
+        .filters-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .form-input {
+            padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px;
+            font-size: 12px; background: var(--bg-primary); color: var(--text-primary);
+            outline: none; transition: border-color 0.2s;
+        }
+        .form-input:focus { border-color: var(--accent); }
+        .btn-sm {
+            padding: 5px 12px; border: 1px solid var(--border); border-radius: 6px;
+            font-size: 11px; font-weight: 600; cursor: pointer;
+            background: var(--bg-primary); color: var(--text-secondary);
+            transition: all 0.15s;
+        }
+        .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+        .active-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+        .filter-tag {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 600;
+            background: var(--accent-light); color: var(--accent);
+        }
+
+        /* ── Charts Grid ───────────────────────────────────── */
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+        /* ── Donut Chart ───────────────────────────────────── */
+        .donut-container { display: flex; align-items: center; gap: 28px; justify-content: center; padding: 10px 0; }
+        .donut-legend { display: flex; flex-direction: column; gap: 8px; }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+        .legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
+        .legend-label { color: var(--text-secondary); min-width: 60px; }
+        .legend-value { font-weight: 700; margin-left: auto; min-width: 30px; text-align: right; }
+        .legend-pct { font-size: 10px; color: var(--text-muted); min-width: 40px; text-align: right; }
+
+        /* ── Bar Chart ─────────────────────────────────────── */
+        .bar-chart { max-height: 440px; overflow-y: auto; }
+        .bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+        .bar-label {
+            width: 180px; font-size: 11px; font-family: 'Consolas', 'Cascadia Code', monospace;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            color: var(--text-secondary); flex-shrink: 0;
+        }
+        .bar-track { flex: 1; height: 18px; background: var(--bg-primary); border-radius: 3px; overflow: hidden; display: flex; }
+        .bar-segment { height: 100%; transition: width 0.4s ease; }
+        .bar-value { width: 36px; font-size: 11px; font-weight: 700; text-align: right; flex-shrink: 0; }
+        .bar-toggle { text-align: center; margin-top: 8px; }
+
+        /* ── Insights Grid ─────────────────────────────────── */
+        .insights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        .insight-card { padding: 16px 20px; }
+        .insight-card.full-width { grid-column: 1 / -1; }
+        .insight-card.danger-border { border-left: 4px solid var(--danger); }
+        .insight-card.warning-border { border-left: 4px solid var(--warning); }
+        .insight-card.success-border { border-left: 4px solid var(--success); }
+
+        /* ── Ranking List ──────────────────────────────────── */
+        .ranking-list { list-style: none; }
+        .ranking-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+        .ranking-item:last-child { border-bottom: none; }
+        .ranking-pos { width: 22px; height: 22px; border-radius: 50%; background: var(--accent-light); color: var(--accent); font-size: 11px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .ranking-pos.gold { background: #fef3c7; color: #92400e; }
+        .ranking-pos.silver { background: #e5e7eb; color: #374151; }
+        .ranking-pos.bronze { background: #fed7aa; color: #9a3412; }
+        .ranking-url { flex: 1; font-size: 12px; font-family: 'Consolas', monospace; color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ranking-bar { width: 120px; height: 14px; background: var(--bg-primary); border-radius: 3px; overflow: hidden; display: flex; flex-shrink: 0; }
+        .ranking-count { font-size: 12px; font-weight: 700; width: 36px; text-align: right; flex-shrink: 0; }
+
+        /* ── Worker Table ──────────────────────────────────── */
+        .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .data-table th {
+            text-align: left; padding: 8px 10px; font-weight: 700; font-size: 10px;
+            text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted);
+            border-bottom: 2px solid var(--border); cursor: pointer; user-select: none;
+            white-space: nowrap;
+        }
+        .data-table th:hover { color: var(--accent); }
+        .data-table th .sort-arrow { font-size: 9px; margin-left: 3px; opacity: 0.4; }
+        .data-table th.sorted .sort-arrow { opacity: 1; color: var(--accent); }
+        .data-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); color: var(--text-secondary); }
+        .data-table tr:hover td { background: var(--accent-light); }
+        .data-table .cell-mono { font-family: 'Consolas', monospace; font-size: 11px; }
+        .data-table .cell-url { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .data-table .cell-num { text-align: center; font-weight: 700; min-width: 40px; }
+        .data-table .cell-sev { text-align: center; font-weight: 700; min-width: 40px; border-radius: 4px; padding: 2px 6px; }
+
+        /* ── Severity Badge Colors ─────────────────────────── */
+        .sev-urgent { background: var(--danger-light); color: var(--danger); }
+        .sev-high { background: var(--warning-light); color: var(--warning); }
+        .sev-medium { background: #fef9c3; color: #a16207; }
+        [data-theme="dark"] .sev-medium { background: #422006; color: #fbbf24; }
+        .sev-low { background: var(--info-light); color: var(--info); }
+        .sev-minimal { background: var(--bg-primary); color: var(--text-muted); }
+        .sev-zero { color: var(--text-muted); opacity: 0.4; }
+
+        /* ── Stats Cards ───────────────────────────────────── */
+        .stat-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+        .stat-label { font-size: 12px; color: var(--text-secondary); flex: 1; }
+        .stat-value { font-size: 14px; font-weight: 700; }
+        .stat-bar { width: 100%; height: 6px; background: var(--bg-primary); border-radius: 3px; overflow: hidden; margin-top: 2px; }
+        .stat-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+
+        /* ── Detail Table Section ──────────────────────────── */
+        .detail-section { margin-bottom: 16px; }
+        .table-wrapper { overflow-x: auto; max-height: 520px; overflow-y: auto; }
+        .table-wrapper thead th { position: sticky; top: 0; background: var(--bg-card); z-index: 2; }
+        .table-count { font-size: 11px; color: var(--text-muted); font-weight: 400; }
+        /* ── Scrollable insight tables ────────────────────── */
+        .insight-table-wrapper { max-height: 400px; overflow-y: auto; }
+        .insight-table-wrapper thead th { position: sticky; top: 0; background: var(--bg-card); z-index: 2; }
+
+        /* ── Footer ────────────────────────────────────────── */
+        .footer { text-align: center; padding: 16px 32px; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border); }
+
+        /* ── Responsive ────────────────────────────────────── */
+        @media (max-width: 1024px) {
+            .charts-grid, .insights-grid { grid-template-columns: 1fr; }
+            .summary-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 640px) {
+            .header { padding: 10px 16px; }
+            .main { padding: 12px 16px; }
+            .summary-grid { grid-template-columns: repeat(2, 1fr); }
+            .bar-label { width: 100px; }
+            .donut-container { flex-direction: column; }
+            .section-nav { overflow-x: auto; }
+        }
+
+        /* ── Section Nav (sticky) ─────────────────────────── */
+        .section-nav {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 8px 16px;
+            margin-bottom: 16px;
+            position: sticky;
+            top: 52px;
+            z-index: 90;
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            flex-wrap: nowrap;
+            transition: background 0.3s, border-color 0.3s;
+        }
+        .section-nav a {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-decoration: none;
+            white-space: nowrap;
+            transition: all 0.15s;
+        }
+        .section-nav a:hover { background: var(--accent-light); color: var(--accent); }
+        .section-nav a.active-section { background: var(--accent-light); color: var(--accent); font-weight: 700; }
+
+        /* ── Export Button ─────────────────────────────────── */
+        .btn-export-section {
+            padding: 3px 8px;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            font-size: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            background: var(--bg-primary);
+            color: var(--text-muted);
+            transition: all 0.15s;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .btn-export-section:hover { border-color: var(--success); color: var(--success); background: var(--success-light); }
+        .btn-export-all {
+            padding: 5px 14px;
+            border: 1px solid var(--success);
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            background: var(--success);
+            color: #fff;
+            transition: all 0.15s;
+        }
+        .btn-export-all:hover { opacity: 0.85; }
+
+        /* ── Back to Top ──────────────────────────────────── */
+        .back-to-top {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-lg);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s, transform 0.2s;
+            z-index: 200;
+        }
+        .back-to-top.visible { opacity: 1; visibility: visible; }
+        .back-to-top:hover { transform: scale(1.1); }
+
+        /* ── Collapsible ──────────────────────────────────── */
+        .section-header .collapse-btn {
+            padding: 2px 6px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--bg-primary);
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 10px;
+            transition: all 0.15s;
+            margin-left: 6px;
+        }
+        .section-header .collapse-btn:hover { color: var(--accent); border-color: var(--accent); }
+        .section-body.collapsed { display: none; }
+
+        /* ── Filtered Badge ───────────────────────────────── */
+        .filtered-badge {
+            display: inline-block;
+            font-size: 9px;
+            padding: 1px 6px;
+            border-radius: 10px;
+            background: var(--accent-light);
+            color: var(--accent);
+            font-weight: 700;
+            margin-left: 6px;
+        }
+
+        /* ── Vuln Detail Row (expandable URLs) ───────────── */
+        .vuln-row { cursor: pointer; transition: background 0.1s; }
+        .vuln-row:hover td { background: var(--accent-light); }
+        .vuln-row.selected td { background: var(--accent-light); }
+        .vuln-row .expand-arrow { display: inline-block; font-size: 8px; margin-right: 4px; transition: transform 0.2s; color: var(--text-muted); }
+        .vuln-row.selected .expand-arrow { transform: rotate(90deg); color: var(--accent); }
+        .vuln-urls-row { display: none; }
+        .vuln-urls-row.visible { display: table-row; }
+        .vuln-urls-row td { padding: 0 10px 8px 10px; border-bottom: 1px solid var(--border); }
+        .vuln-urls-list { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 0; }
+        .vuln-url-chip {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 8px; border-radius: 6px; font-size: 10px;
+            background: var(--bg-primary); border: 1px solid var(--border);
+            color: var(--text-secondary); font-family: 'Consolas', monospace;
+        }
+        .vuln-url-chip .chip-port { font-size: 9px; color: var(--text-muted); }
+
+        /* ── Severity Chips (multi-select) ────────────────── */
+        .sev-chip {
+            padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600;
+            border: 1px solid var(--border); background: var(--bg-primary); color: var(--text-muted);
+            cursor: pointer; transition: all 0.15s; white-space: nowrap;
+        }
+        .sev-chip:hover { border-color: var(--chip-color, var(--accent)); color: var(--chip-color, var(--accent)); }
+        .sev-chip.active { background: var(--chip-bg, var(--accent-light)); color: var(--chip-color, var(--accent)); border-color: var(--chip-color, var(--accent)); font-weight: 700; }
+
+        /* ── Risk Score ───────────────────────────────────── */
+        .risk-low { color: var(--success); }
+        .risk-medium { color: var(--warning); }
+        .risk-high { color: var(--danger); }
+
+        /* ── Timeline Chart ───────────────────────────────── */
+        .timeline-chart { padding: 8px 0; }
+        .timeline-chart svg { width: 100%; }
+    </style>
+</head>
+<body>
+    <!-- ── Header ──────────────────────────────────────────── -->
+    <div class="header">
+        <div class="header-left">
+            <div class="header-logo">Q</div>
+            <h1>Qualys <span>Schedule</span></h1>
+            <div class="nav-links">
+                <a href="/">Dashboard</a>
+                <a href="/historico.html">Historico</a>
+                <a href="/vulns.html" class="active">Vulns</a>
+                <a href="/reports.html">Reports</a>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="status-badge online" id="status-badge">
+                <span class="dot"></span>
+                <span id="status-text">Conectando...</span>
+            </div>
+            <div class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
+                <div class="toggle-thumb" id="theme-icon">&#9790;</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main">
+        <!-- ── Empty State ─────────────────────────────────── -->
+        <div id="empty-state" class="card" style="margin-bottom:16px;">
+            <div class="empty-state">
+                <span class="empty-icon">&#128202;</span>
+                <div class="empty-title">Carregando dados de vulnerabilidades...</div>
+                <div class="empty-desc">Consultando API Qualys para obter dados dos scans do mes de referencia atual. Os dados aparecerao automaticamente a medida que forem carregados.</div>
+            </div>
+        </div>
+
+        <!-- ── Content (hidden until data) ─────────────────── -->
+        <div id="vulns-content" style="display:none;">
+
+            <!-- ── Section Nav (sticky) ───────────────────── -->
+            <div class="section-nav" id="section-nav">
+                <a href="#sec-summary" onclick="scrollToSection(event,'sec-summary')">Resumo</a>
+                <a href="#sec-charts" onclick="scrollToSection(event,'sec-charts')">Graficos</a>
+                <a href="#sec-insights" onclick="scrollToSection(event,'sec-insights')">Insights</a>
+                <a href="#sec-detail" onclick="scrollToSection(event,'sec-detail')">Tabela</a>
+                <a href="#sec-vulnnames" onclick="scrollToSection(event,'sec-vulnnames')">Vulnerabilidades</a>
+                <span style="margin-left:auto;"></span>
+                <button class="btn-export-all" onclick="exportAll()" title="Exportar todos os dados filtrados">&#11123; Exportar Tudo</button>
+            </div>
+
+            <!-- ── Summary Cards ───────────────────────────── -->
+            <div class="summary-grid" id="sec-summary">
+                <div class="card summary-card">
+                    <div class="card-value" id="sum-scans" style="color:var(--accent)">0</div>
+                    <div class="card-label">Scans Analisados</div>
+                </div>
+                <div class="card summary-card">
+                    <div class="card-value" id="sum-urgent" style="color:var(--danger)">0</div>
+                    <div class="card-label">Urgent</div>
+                </div>
+                <div class="card summary-card">
+                    <div class="card-value" id="sum-high" style="color:var(--warning)">0</div>
+                    <div class="card-label">High</div>
+                </div>
+                <div class="card summary-card">
+                    <div class="card-value" id="sum-medium" style="color:#d97706">0</div>
+                    <div class="card-label">Medium</div>
+                </div>
+                <div class="card summary-card">
+                    <div class="card-value" id="sum-low" style="color:var(--info)">0</div>
+                    <div class="card-label">Low + Minimal</div>
+                </div>
+            </div>
+
+            <!-- ── Filters ─────────────────────────────────── -->
+            <div class="card filters-bar">
+                <div class="section-header">
+                    <span class="section-title">Filtros</span>
+                    <button class="btn-sm" onclick="clearFilters()">Limpar</button>
+                </div>
+                <div class="filters-row">
+                    <select class="form-input" id="filter-severity" style="width:auto;min-width:140px;" onchange="applyFilters()">
+                        <option value="">Todas severidades</option>
+                        <option value="Urgent">Urgent</option>
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                        <option value="Minimal">Minimal</option>
+                    </select>
+                    <input type="text" class="form-input" id="filter-url" placeholder="Filtrar por URL ou scan..." style="flex:1;min-width:180px;" oninput="applyFilters()">
+                    <select class="form-input" id="filter-worker" style="width:auto;min-width:160px;" onchange="applyFilters()">
+                        <option value="">Todos workers</option>
+                    </select>
+                    <input type="date" class="form-input" id="filter-date-from" style="width:auto;" onchange="applyFilters()" title="Data inicial">
+                    <input type="date" class="form-input" id="filter-date-to" style="width:auto;" onchange="applyFilters()" title="Data final">
+                </div>
+                <div class="active-filters" id="active-filters"></div>
+            </div>
+
+            <!-- ── Carregar Historico ─────────────────────── -->
+            <div class="card" id="history-load-card" style="margin-bottom:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;">
+                <div style="font-size:13px;color:var(--text-secondary);">
+                    <strong>Dados exibidos:</strong> Mes de referencia atual.
+                    Para visualizar scans anteriores, carregue o historico completo (12 meses).
+                </div>
+                <button class="btn-sm" id="btn-load-history" onclick="loadHistory()" style="white-space:nowrap;padding:6px 16px;font-weight:600;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">
+                    Carregar Historico
+                </button>
+            </div>
+
+            <!-- ── Charts ──────────────────────────────────── -->
+            <div class="charts-grid" id="sec-charts">
+                <div class="card">
+                    <div class="section-header">
+                        <span class="section-title">Distribuicao por Severidade</span>
+                    </div>
+                    <div id="chart-donut"></div>
+                </div>
+                <div class="card">
+                    <div class="section-header">
+                        <span class="section-title">Vulnerabilidades por Scan</span>
+                        <span class="table-count" id="bar-count"></span>
+                    </div>
+                    <div id="chart-bars" class="bar-chart"></div>
+                </div>
+            </div>
+
+            <!-- ── Insights ────────────────────────────────── -->
+            <div class="insights-grid" id="sec-insights">
+                <!-- Top 5 mais vulneraveis -->
+                <div class="card insight-card">
+                    <div class="section-header">
+                        <span class="section-title">Top 5 - URLs Mais Vulneraveis</span>
+                        <span><button class="btn-export-section" onclick="exportTop5()" title="Exportar CSV">&#11123;</button><button class="collapse-btn" onclick="toggleCollapse(this)">&#9660;</button></span>
+                    </div>
+                    <div id="insight-top5" class="section-body"></div>
+                </div>
+
+                <!-- Distribuicao por Worker -->
+                <div class="card insight-card">
+                    <div class="section-header">
+                        <span class="section-title">Distribuicao por Worker</span>
+                        <span><button class="btn-export-section" onclick="exportWorkers()" title="Exportar CSV">&#11123;</button><button class="collapse-btn" onclick="toggleCollapse(this)">&#9660;</button></span>
+                    </div>
+                    <div id="insight-workers" class="section-body"></div>
+                </div>
+
+                <!-- Score de Risco por URL -->
+                <div class="card insight-card">
+                    <div class="section-header">
+                        <span class="section-title">Score de Risco por URL</span>
+                        <span><button class="btn-export-section" onclick="exportRiskScore()" title="Exportar CSV">&#11123;</button><button class="collapse-btn" onclick="toggleCollapse(this)">&#9660;</button></span>
+                    </div>
+                    <div id="insight-riskscore" class="section-body"></div>
+                </div>
+
+                <!-- Distribuicao por Porta -->
+                <div class="card insight-card">
+                    <div class="section-header">
+                        <span class="section-title">Distribuicao por Porta</span>
+                        <span><button class="btn-export-section" onclick="exportPorts()" title="Exportar CSV">&#11123;</button><button class="collapse-btn" onclick="toggleCollapse(this)">&#9660;</button></span>
+                    </div>
+                    <div id="insight-ports" class="section-body"></div>
+                </div>
+
+                <!-- Alertas Criticos -->
+                <div class="card insight-card danger-border" id="insight-critical-card" style="display:none;">
+                    <div class="section-header">
+                        <span class="section-title" style="color:var(--danger)">&#9888; Alertas Criticos</span>
+                        <span><button class="btn-export-section" onclick="exportCritical()" title="Exportar CSV">&#11123;</button><button class="collapse-btn" onclick="toggleCollapse(this)">&#9660;</button></span>
+                    </div>
+                    <div id="insight-critical" class="section-body"></div>
+                </div>
+
+                <!-- Scans sem Achados -->
+                <div class="card insight-card warning-border" id="insight-empty-card" style="display:none;">
+                    <div class="section-header">
+                        <span class="section-title" style="color:var(--warning)">&#8709; Scans sem Achados</span>
+                        <span><button class="btn-export-section" onclick="exportEmptyScans()" title="Exportar CSV">&#11123;</button><button class="collapse-btn" onclick="toggleCollapse(this)">&#9660;</button></span>
+                    </div>
+                    <div id="insight-empty" class="section-body"></div>
+                </div>
+
+                <!-- Timeline de Scans -->
+                <div class="card insight-card full-width">
+                    <div class="section-header">
+                        <span class="section-title">Timeline - Vulnerabilidades por Data</span>
+                        <button class="collapse-btn" onclick="toggleCollapse(this)">&#9660;</button>
+                    </div>
+                    <div id="insight-timeline" class="section-body timeline-chart"></div>
+                </div>
+
+                <!-- Vulns Recorrentes -->
+                <div class="card insight-card full-width" id="insight-recurrent-card" style="display:none;">
+                    <div class="section-header">
+                        <span class="section-title">Vulnerabilidades Recorrentes (multi-scan)</span>
+                        <span><button class="btn-export-section" onclick="exportRecurrent()" title="Exportar CSV">&#11123;</button><button class="collapse-btn" onclick="toggleCollapse(this)">&#9660;</button></span>
+                    </div>
+                    <div id="insight-recurrent" class="section-body"></div>
+                </div>
+
+                <!-- Distribuicao por Nome de Vulnerabilidade -->
+                <div class="card insight-card full-width" id="sec-vulnnames">
+                    <div class="section-header" id="insight-vulnnames-card">
+                        <span class="section-title">Distribuicao por Vulnerabilidade <span id="vulnnames-filtered-badge"></span></span>
+                        <span style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                            <span id="vuln-sev-chips" style="display:inline-flex;gap:3px;">
+                                <button class="sev-chip active" data-sev="" onclick="toggleSevChip(this)">Todas</button>
+                                <button class="sev-chip" data-sev="Urgent" onclick="toggleSevChip(this)" style="--chip-color:#dc2626;--chip-bg:#fee2e2;">Urgent</button>
+                                <button class="sev-chip" data-sev="High" onclick="toggleSevChip(this)" style="--chip-color:#d97706;--chip-bg:#fef3c7;">High</button>
+                                <button class="sev-chip" data-sev="Medium" onclick="toggleSevChip(this)" style="--chip-color:#a16207;--chip-bg:#fef9c3;">Medium</button>
+                                <button class="sev-chip" data-sev="Low" onclick="toggleSevChip(this)" style="--chip-color:#2563eb;--chip-bg:#dbeafe;">Low</button>
+                                <button class="sev-chip" data-sev="Minimal" onclick="toggleSevChip(this)" style="--chip-color:#8e8ea0;--chip-bg:var(--bg-primary);">Minimal</button>
+                            </span>
+                            <span style="border-left:1px solid var(--border);height:16px;margin:0 2px;"></span>
+                            <button class="sev-chip" id="chip-sw" onclick="toggleGroupFilter()" style="--chip-color:#7c3aed;--chip-bg:#ede9fe;">Sec. Weakness</button>
+                            <span class="table-count" id="vulnnames-count"></span>
+                            <button class="btn-export-section" onclick="exportVulnNames()" title="Exportar CSV">&#11123;</button>
+                            <button class="collapse-btn" onclick="toggleCollapse(this)">&#9660;</button>
+                        </span>
+                    </div>
+                    <div id="insight-vulnnames" class="section-body"></div>
+                </div>
+
+                <!-- Resumo Estatistico -->
+                <div class="card insight-card full-width success-border">
+                    <div class="section-header">
+                        <span class="section-title">Resumo Estatistico</span>
+                        <span><button class="btn-export-section" onclick="exportStats()" title="Exportar CSV">&#11123;</button><button class="collapse-btn" onclick="toggleCollapse(this)">&#9660;</button></span>
+                    </div>
+                    <div id="insight-stats" class="section-body"></div>
+                </div>
+            </div>
+
+            <!-- ── Tabela Detalhada ────────────────────────── -->
+            <div class="card detail-section" id="sec-detail">
+                <div class="section-header">
+                    <span class="section-title">Tabela Detalhada</span>
+                    <span>
+                        <span class="table-count" id="table-count"></span>
+                        <button class="btn-export-section" onclick="exportDetailTable()" title="Exportar CSV">&#11123;</button>
+                        <button class="collapse-btn" onclick="toggleCollapse(this)">&#9660;</button>
+                    </span>
+                </div>
+                <div class="table-wrapper section-body">
+                    <table class="data-table" id="detail-table">
+                        <thead>
+                            <tr>
+                                <th data-col="scan_label" onclick="sortTable('scan_label')">Scan <span class="sort-arrow">&#9650;</span></th>
+                                <th data-col="url" onclick="sortTable('url')">URL <span class="sort-arrow">&#9650;</span></th>
+                                <th data-col="port" onclick="sortTable('port')">Porta <span class="sort-arrow">&#9650;</span></th>
+                                <th data-col="worker" onclick="sortTable('worker')">Worker <span class="sort-arrow">&#9650;</span></th>
+                                <th data-col="urgent" onclick="sortTable('urgent')">Urg <span class="sort-arrow">&#9650;</span></th>
+                                <th data-col="high" onclick="sortTable('high')">High <span class="sort-arrow">&#9650;</span></th>
+                                <th data-col="medium" onclick="sortTable('medium')">Med <span class="sort-arrow">&#9650;</span></th>
+                                <th data-col="low" onclick="sortTable('low')">Low <span class="sort-arrow">&#9650;</span></th>
+                                <th data-col="minimal" onclick="sortTable('minimal')">Min <span class="sort-arrow">&#9650;</span></th>
+                                <th data-col="total_vulns" onclick="sortTable('total_vulns')">Total <span class="sort-arrow">&#9650;</span></th>
+                                <th data-col="sw" onclick="sortTable('sw')" title="Security Weakness">SW <span class="sort-arrow">&#9650;</span></th>
+                                <th data-col="info" onclick="sortTable('info')">Info <span class="sort-arrow">&#9650;</span></th>
+                                <th data-col="finished_date" onclick="sortTable('finished_date')">Data <span class="sort-arrow">&#9650;</span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="detail-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Back to Top ──────────────────────────────── -->
+    <button class="back-to-top" id="back-to-top" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Voltar ao topo">&#9650;</button>
+
+    <div class="footer">Qualys Schedule &mdash; Dashboard Vulns</div>
+
+    <script>
+    /* ══════════════════════════════════════════════════════════
+       THEME
+       ══════════════════════════════════════════════════════════ */
+    (function() {
+        var saved = localStorage.getItem('theme');
+        if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    })();
+    function toggleTheme() {
+        var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        if (isDark) {
+            document.documentElement.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'light');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+        }
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       CSRF TOKEN
+       ══════════════════════════════════════════════════════════ */
+    var _csrfToken = '';
+    (async function() {
+        try {
+            var res = await fetch('/api/csrf-token');
+            var data = await res.json();
+            if (data.ok) _csrfToken = data.token;
+        } catch(e) {}
+    })();
+    function csrfHeaders(extra) {
+        var h = { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrfToken };
+        if (extra) for (var k in extra) h[k] = extra[k];
+        return h;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       GLOBALS
+       ══════════════════════════════════════════════════════════ */
+    var vulnsData = [];
+    var filteredData = [];
+    var sortCol = 'total_vulns';
+    var sortDir = 'desc';
+    var workerListPopulated = false;
+    var lastDataHash = '';
+    var vulnSevFilters = []; // array de severidades selecionadas (ex: ['Urgent','High'])
+    var vulnGroupFilter = ''; // filtro de grupo (ex: 'SW' para Security Weakness)
+
+    var SEV_COLORS = {
+        'Urgent': '#dc2626',
+        'High':   '#d97706',
+        'Medium': '#f59e0b',
+        'Low':    '#2563eb',
+        'Minimal':'#8e8ea0'
+    };
+    var SEV_ORDER = ['Urgent', 'High', 'Medium', 'Low', 'Minimal'];
+
+    /* ══════════════════════════════════════════════════════════
+       HELPERS
+       ══════════════════════════════════════════════════════════ */
+    function escapeHtml(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+    function escapeAttr(s) { return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;'); }
+
+    function extractDns(label) {
+        if (!label) return '—';
+        var parts = label.split(' ');
+        if (parts.length >= 2 && /^\d{6,8}$/.test(parts[0])) return parts[1];
+        return label;
+    }
+
+    function getSevVulns(item, sev) {
+        var f = item.findings || {};
+        var s = f[sev];
+        return s ? (s.vulns || 0) : 0;
+    }
+
+    function getTotalVulns(item) {
+        var t = (item.findings || {})._totals;
+        return t ? (t.vulns || 0) : 0;
+    }
+
+    function getTotalAll(item) {
+        var t = (item.findings || {})._totals;
+        return t ? (t.total || 0) : 0;
+    }
+
+    function getInfo(item) {
+        var t = (item.findings || {})._totals;
+        return t ? (t.info || 0) : 0;
+    }
+
+    function getSecWeaknessCount(item) {
+        var details = item.finding_details || [];
+        var count = 0;
+        details.forEach(function(d) {
+            if ((d.group || '').toUpperCase().indexOf('SECURITY_WEAKNESS') !== -1) count++;
+        });
+        return count;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       STATE POLLING
+       ══════════════════════════════════════════════════════════ */
+    function updateStatusBadge(phase) {
+        var el = document.getElementById('status-text');
+        var badge = document.getElementById('status-badge');
+        var map = {
+            'auth': 'Aguardando login',
+            'ready': 'Aguardando inicio',
+            'setup': 'Configurando...',
+            'running': 'Scans em execucao',
+            'finished': 'Concluido'
+        };
+        el.textContent = map[phase] || phase;
+        badge.className = 'status-badge' + (phase === 'running' || phase === 'finished' ? ' online' : '');
+    }
+
+    function computeDataHash(data) {
+        return data.length + ':' + data.map(function(d) { return (d.scan_id || '') + (d.finished_date || ''); }).join(',');
+    }
+
+    function validateVulnItem(item) {
+        return item && typeof item === 'object'
+            && typeof item.scan_label === 'string'
+            && (item.findings === undefined || typeof item.findings === 'object');
+    }
+
+    async function fetchState() {
+        try {
+            var res = await fetch('/api/state');
+            if (!res.ok) return;
+            var state = await res.json();
+            if (!state || typeof state !== 'object') return;
+            updateStatusBadge(state.phase);
+
+            if (state.vulns_data && Array.isArray(state.vulns_data) && state.vulns_data.length > 0) {
+                // Validar estrutura basica dos itens
+                var validData = state.vulns_data.filter(validateVulnItem);
+                if (validData.length === 0) return;
+
+                var newHash = computeDataHash(validData);
+                var dataChanged = newHash !== lastDataHash;
+                if (dataChanged) {
+                    lastDataHash = newHash;
+                    vulnsData = validData;
+                    document.getElementById('empty-state').style.display = 'none';
+                    document.getElementById('vulns-content').style.display = '';
+                    if (!workerListPopulated) populateWorkerFilter();
+                    applyFilters();
+                }
+            } else if (vulnsData.length === 0) {
+                document.getElementById('empty-state').style.display = '';
+                document.getElementById('vulns-content').style.display = 'none';
+            }
+        } catch (e) { /* connection lost */ }
+    }
+
+    var historyLoaded = false;
+
+    async function loadHistory() {
+        var btn = document.getElementById('btn-load-history');
+        var card = document.getElementById('history-load-card');
+        btn.disabled = true;
+        btn.textContent = 'Carregando...';
+        try {
+            var res = await fetch('/api/vulns/load-history', { method: 'POST', headers: csrfHeaders() });
+            var data = await res.json();
+            if (data.ok) {
+                historyLoaded = true;
+                card.innerHTML = '<div style="font-size:13px;color:var(--success);display:flex;align-items:center;gap:8px;">'
+                    + '<span>&#10003;</span> <strong>Historico carregado!</strong> '
+                    + data.message + '. Os dados aparecerao progressivamente.</div>';
+            } else {
+                btn.textContent = 'Erro - Tentar novamente';
+                btn.disabled = false;
+            }
+        } catch (e) {
+            btn.textContent = 'Erro - Tentar novamente';
+            btn.disabled = false;
+        }
+    }
+
+    fetchState();
+    setInterval(fetchState, 3000);
+
+    /* ══════════════════════════════════════════════════════════
+       FILTERS
+       ══════════════════════════════════════════════════════════ */
+    function populateWorkerFilter() {
+        var sel = document.getElementById('filter-worker');
+        var workers = {};
+        vulnsData.forEach(function(d) { if (d.worker) workers[d.worker] = true; });
+        var current = sel.value;
+        sel.innerHTML = '<option value="">Todos workers</option>';
+        Object.keys(workers).sort().forEach(function(w) {
+            sel.innerHTML += '<option value="' + escapeAttr(w) + '">' + escapeHtml(w) + '</option>';
+        });
+        sel.value = current;
+        workerListPopulated = true;
+    }
+
+    function applyFilters() {
+        var sev = document.getElementById('filter-severity').value;
+        var url = document.getElementById('filter-url').value.toLowerCase().trim();
+        var worker = document.getElementById('filter-worker').value;
+        var dateFrom = document.getElementById('filter-date-from').value;
+        var dateTo = document.getElementById('filter-date-to').value;
+
+        filteredData = vulnsData.filter(function(item) {
+            if (url && (item.scan_label || '').toLowerCase().indexOf(url) === -1
+                && (item.url || '').toLowerCase().indexOf(url) === -1) return false;
+            if (worker && item.worker !== worker) return false;
+            if (dateFrom && (item.finished_date || '') < dateFrom) return false;
+            if (dateTo && (item.finished_date || '') > dateTo) return false;
+            if (sev) {
+                var sv = (item.findings || {})[sev];
+                if (!sv || (sv.vulns + sv.sensitive + sv.info) === 0) return false;
+            }
+            return true;
+        });
+
+        renderActiveFilters(sev, url, worker, dateFrom, dateTo);
+        renderAll(filteredData);
+    }
+
+    function renderActiveFilters(sev, url, worker, dateFrom, dateTo) {
+        var el = document.getElementById('active-filters');
+        var tags = [];
+        if (sev) tags.push('<span class="filter-tag">' + sev + '</span>');
+        if (url) tags.push('<span class="filter-tag">URL: ' + escapeHtml(url) + '</span>');
+        if (worker) tags.push('<span class="filter-tag">' + escapeHtml(worker) + '</span>');
+        if (dateFrom) tags.push('<span class="filter-tag">De: ' + dateFrom + '</span>');
+        if (dateTo) tags.push('<span class="filter-tag">Ate: ' + dateTo + '</span>');
+        el.innerHTML = tags.join('');
+    }
+
+    function clearFilters() {
+        document.getElementById('filter-severity').value = '';
+        document.getElementById('filter-url').value = '';
+        document.getElementById('filter-worker').value = '';
+        document.getElementById('filter-date-from').value = '';
+        document.getElementById('filter-date-to').value = '';
+        applyFilters();
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       RENDER ALL
+       ══════════════════════════════════════════════════════════ */
+    function renderAll(data) {
+        renderSummaryCards(data);
+        renderDonutChart(data);
+        renderBarChart(data);
+        renderInsightTop5(data);
+        renderInsightWorkers(data);
+        renderInsightRiskScore(data);
+        renderInsightPorts(data);
+        renderInsightCritical(data);
+        renderInsightEmpty(data);
+        renderInsightTimeline(data);
+        renderInsightRecurrent(data);
+        renderInsightVulnNames(data);
+        renderInsightStats(data);
+        renderDetailTable(data);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       SUMMARY CARDS
+       ══════════════════════════════════════════════════════════ */
+    function renderSummaryCards(data) {
+        var totals = { scans: data.length, Urgent: 0, High: 0, Medium: 0, Low: 0, Minimal: 0 };
+        var cicloCount = 0, histCount = 0;
+        data.forEach(function(item) {
+            SEV_ORDER.forEach(function(s) { totals[s] += getSevVulns(item, s); });
+            if (item.source === 'historico') histCount++; else cicloCount++;
+        });
+        var scansLabel = totals.scans;
+        if (histCount > 0 && cicloCount > 0) {
+            scansLabel = totals.scans + ' (' + cicloCount + ' ciclo + ' + histCount + ' hist)';
+        } else if (histCount > 0) {
+            scansLabel = totals.scans + ' (mes atual)';
+        }
+        document.getElementById('sum-scans').textContent = scansLabel;
+        document.getElementById('sum-urgent').textContent = totals.Urgent;
+        document.getElementById('sum-high').textContent = totals.High;
+        document.getElementById('sum-medium').textContent = totals.Medium;
+        document.getElementById('sum-low').textContent = (totals.Low + totals.Minimal);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       DONUT CHART (SVG)
+       ══════════════════════════════════════════════════════════ */
+    function renderDonutChart(data) {
+        var container = document.getElementById('chart-donut');
+        var counts = {};
+        SEV_ORDER.forEach(function(s) { counts[s] = 0; });
+        data.forEach(function(item) {
+            SEV_ORDER.forEach(function(s) { counts[s] += getSevVulns(item, s); });
+        });
+
+        var total = 0;
+        SEV_ORDER.forEach(function(s) { total += counts[s]; });
+
+        if (total === 0) {
+            container.innerHTML = '<div class="donut-container">'
+                + '<svg viewBox="0 0 160 160" width="180" height="180">'
+                + '<circle cx="80" cy="80" r="60" fill="none" stroke="var(--border)" stroke-width="22" />'
+                + '<text x="80" y="76" text-anchor="middle" fill="var(--text-muted)" font-size="22" font-weight="800">0</text>'
+                + '<text x="80" y="94" text-anchor="middle" fill="var(--text-muted)" font-size="10">VULNS</text>'
+                + '</svg>'
+                + '<div style="color:var(--text-muted);font-size:13px;">Nenhuma vulnerabilidade encontrada</div>'
+                + '</div>';
+            return;
+        }
+
+        var cx = 80, cy = 80, r = 60;
+        var circ = 2 * Math.PI * r;
+        var offset = 0;
+        var svg = '<svg viewBox="0 0 160 160" width="180" height="180">';
+
+        SEV_ORDER.forEach(function(s) {
+            if (counts[s] === 0) return;
+            var pct = counts[s] / total;
+            var dashLen = pct * circ;
+            svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" '
+                + 'fill="none" stroke="' + SEV_COLORS[s] + '" stroke-width="22" '
+                + 'stroke-dasharray="' + dashLen.toFixed(2) + ' ' + (circ - dashLen).toFixed(2) + '" '
+                + 'stroke-dashoffset="' + (-offset).toFixed(2) + '" '
+                + 'transform="rotate(-90 ' + cx + ' ' + cy + ')">'
+                + '<title>' + s + ': ' + counts[s] + ' (' + (pct * 100).toFixed(1) + '%)</title>'
+                + '</circle>';
+            offset += dashLen;
+        });
+
+        svg += '<text x="' + cx + '" y="' + (cy - 4) + '" text-anchor="middle" fill="var(--text-primary)" font-size="22" font-weight="800">' + total + '</text>';
+        svg += '<text x="' + cx + '" y="' + (cy + 12) + '" text-anchor="middle" fill="var(--text-muted)" font-size="10">VULNS</text>';
+        svg += '</svg>';
+
+        var legend = SEV_ORDER.map(function(s) {
+            var pct = total > 0 ? (counts[s] / total * 100).toFixed(1) : '0.0';
+            return '<div class="legend-item">'
+                + '<span class="legend-dot" style="background:' + SEV_COLORS[s] + '"></span>'
+                + '<span class="legend-label">' + s + '</span>'
+                + '<span class="legend-value">' + counts[s] + '</span>'
+                + '<span class="legend-pct">' + pct + '%</span>'
+                + '</div>';
+        }).join('');
+
+        container.innerHTML = '<div class="donut-container">' + svg
+            + '<div class="donut-legend">' + legend + '</div></div>';
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       BAR CHART (CSS)
+       ══════════════════════════════════════════════════════════ */
+    var barShowAll = false;
+
+    function renderBarChart(data) {
+        var container = document.getElementById('chart-bars');
+        var countEl = document.getElementById('bar-count');
+        var sorted = data.slice().sort(function(a, b) { return getTotalVulns(b) - getTotalVulns(a); });
+        var maxShow = barShowAll ? sorted.length : 20;
+        var items = sorted.slice(0, maxShow);
+        countEl.textContent = items.length + ' de ' + sorted.length;
+
+        if (items.length === 0) {
+            container.innerHTML = '<div class="empty-state" style="padding:30px 0;"><span class="empty-icon" style="font-size:32px;">&#128202;</span><div style="font-size:12px;">Sem dados para exibir</div></div>';
+            return;
+        }
+
+        var maxVal = Math.max(1, getTotalVulns(items[0]));
+        var html = items.map(function(item) {
+            var dns = extractDns(item.scan_label);
+            var totalV = getTotalVulns(item);
+            var segments = SEV_ORDER.map(function(s) {
+                var v = getSevVulns(item, s);
+                if (v === 0) return '';
+                var w = (v / maxVal * 100).toFixed(1);
+                return '<div class="bar-segment" style="width:' + w + '%;background:' + SEV_COLORS[s] + ';" title="' + s + ': ' + v + '"></div>';
+            }).join('');
+            return '<div class="bar-row">'
+                + '<span class="bar-label" title="' + escapeAttr(item.scan_label || '') + '">' + escapeHtml(dns) + '</span>'
+                + '<div class="bar-track">' + segments + '</div>'
+                + '<span class="bar-value">' + totalV + '</span></div>';
+        }).join('');
+
+        if (sorted.length > 20) {
+            html += '<div class="bar-toggle"><button class="btn-sm" onclick="toggleBarShowAll()">'
+                + (barShowAll ? 'Mostrar top 20' : 'Mostrar todos (' + sorted.length + ')') + '</button></div>';
+        }
+
+        container.innerHTML = html;
+    }
+
+    function toggleBarShowAll() {
+        barShowAll = !barShowAll;
+        renderBarChart(filteredData);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       INSIGHT: TOP 5 MAIS VULNERAVEIS
+       ══════════════════════════════════════════════════════════ */
+    function renderInsightTop5(data) {
+        var container = document.getElementById('insight-top5');
+        var sorted = data.slice().sort(function(a, b) { return getTotalVulns(b) - getTotalVulns(a); });
+        var top5 = sorted.slice(0, 5);
+        var maxVal = top5.length > 0 ? Math.max(1, getTotalVulns(top5[0])) : 1;
+
+        if (top5.length === 0) {
+            container.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:10px 0;">Sem dados</div>';
+            return;
+        }
+
+        var html = '<ul class="ranking-list">';
+        top5.forEach(function(item, i) {
+            var dns = extractDns(item.scan_label);
+            var total = getTotalVulns(item);
+            var posClass = i === 0 ? 'gold' : (i === 1 ? 'silver' : (i === 2 ? 'bronze' : ''));
+            var segments = SEV_ORDER.map(function(s) {
+                var v = getSevVulns(item, s);
+                if (v === 0) return '';
+                var w = (v / maxVal * 100).toFixed(1);
+                return '<div style="width:' + w + '%;height:100%;background:' + SEV_COLORS[s] + ';"></div>';
+            }).join('');
+            html += '<li class="ranking-item">'
+                + '<span class="ranking-pos ' + posClass + '">' + (i + 1) + '</span>'
+                + '<span class="ranking-url" title="' + escapeAttr(item.url || dns) + '">' + escapeHtml(dns) + '</span>'
+                + '<div class="ranking-bar">' + segments + '</div>'
+                + '<span class="ranking-count">' + total + '</span></li>';
+        });
+        html += '</ul>';
+        container.innerHTML = html;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       INSIGHT: DISTRIBUICAO POR WORKER
+       ══════════════════════════════════════════════════════════ */
+    function renderInsightWorkers(data) {
+        var container = document.getElementById('insight-workers');
+        var workers = {};
+        data.forEach(function(item) {
+            var w = item.worker || 'N/A';
+            if (!workers[w]) workers[w] = { scans: 0, vulns: 0 };
+            workers[w].scans++;
+            workers[w].vulns += getTotalVulns(item);
+        });
+
+        var keys = Object.keys(workers).sort(function(a, b) { return workers[b].vulns - workers[a].vulns; });
+
+        if (keys.length === 0) {
+            container.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:10px 0;">Sem dados</div>';
+            return;
+        }
+
+        var maxV = Math.max(1, workers[keys[0]].vulns);
+        var html = '<table class="data-table"><thead><tr>'
+            + '<th>Worker</th><th style="text-align:center">Scans</th><th style="text-align:center">Vulns</th><th style="width:40%"></th>'
+            + '</tr></thead><tbody>';
+        keys.forEach(function(w) {
+            var d = workers[w];
+            var pct = (d.vulns / maxV * 100).toFixed(0);
+            html += '<tr><td class="cell-mono" style="font-size:11px;">' + escapeHtml(w) + '</td>'
+                + '<td style="text-align:center;font-weight:700;">' + d.scans + '</td>'
+                + '<td style="text-align:center;font-weight:700;">' + d.vulns + '</td>'
+                + '<td><div class="stat-bar"><div class="stat-fill" style="width:' + pct + '%;background:var(--accent);"></div></div></td></tr>';
+        });
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       INSIGHT: ALERTAS CRITICOS (Urgent + High)
+       ══════════════════════════════════════════════════════════ */
+    function renderInsightCritical(data) {
+        var card = document.getElementById('insight-critical-card');
+        var container = document.getElementById('insight-critical');
+        var criticals = data.filter(function(item) {
+            return getSevVulns(item, 'Urgent') > 0 || getSevVulns(item, 'High') > 0;
+        }).sort(function(a, b) {
+            var aScore = getSevVulns(a, 'Urgent') * 10 + getSevVulns(a, 'High');
+            var bScore = getSevVulns(b, 'Urgent') * 10 + getSevVulns(b, 'High');
+            return bScore - aScore;
+        });
+
+        if (criticals.length === 0) {
+            card.style.display = 'none';
+            return;
+        }
+        card.style.display = '';
+
+        var html = '<div style="font-size:12px;color:var(--danger);font-weight:700;margin-bottom:8px;">'
+            + criticals.length + ' scan(s) com vulnerabilidades Urgent ou High</div>';
+        html += '<ul class="ranking-list">';
+        criticals.slice(0, 10).forEach(function(item) {
+            var dns = extractDns(item.scan_label);
+            var urg = getSevVulns(item, 'Urgent');
+            var high = getSevVulns(item, 'High');
+            var badges = '';
+            if (urg > 0) badges += '<span class="cell-sev sev-urgent" style="font-size:10px;margin-right:4px;">Urgent: ' + urg + '</span>';
+            if (high > 0) badges += '<span class="cell-sev sev-high" style="font-size:10px;">High: ' + high + '</span>';
+            html += '<li class="ranking-item">'
+                + '<span class="ranking-url" title="' + escapeAttr(item.url || '') + '">' + escapeHtml(dns) + '</span>'
+                + '<span style="display:flex;gap:4px;">' + badges + '</span></li>';
+        });
+        html += '</ul>';
+        container.innerHTML = html;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       INSIGHT: SCANS SEM ACHADOS
+       ══════════════════════════════════════════════════════════ */
+    function renderInsightEmpty(data) {
+        var card = document.getElementById('insight-empty-card');
+        var container = document.getElementById('insight-empty');
+        var empties = data.filter(function(item) { return getTotalAll(item) === 0; });
+
+        if (empties.length === 0) {
+            card.style.display = 'none';
+            return;
+        }
+        card.style.display = '';
+
+        var html = '<div style="font-size:12px;color:var(--warning);font-weight:700;margin-bottom:8px;">'
+            + empties.length + ' scan(s) finalizaram sem nenhuma vulnerabilidade ou informacao</div>';
+        html += '<ul class="ranking-list">';
+        empties.forEach(function(item) {
+            var dns = extractDns(item.scan_label);
+            html += '<li class="ranking-item">'
+                + '<span class="ranking-url" title="' + escapeAttr(item.url || '') + '">' + escapeHtml(dns) + '</span>'
+                + '<span style="font-size:11px;color:var(--text-muted);">' + escapeHtml(item.worker || '') + '</span></li>';
+        });
+        html += '</ul>';
+        container.innerHTML = html;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       INSIGHT: DISTRIBUICAO POR NOME DE VULNERABILIDADE
+       ══════════════════════════════════════════════════════════ */
+    function renderInsightVulnNames(data) {
+        var container = document.getElementById('insight-vulnnames');
+        var countEl = document.getElementById('vulnnames-count');
+        var badgeEl = document.getElementById('vulnnames-filtered-badge');
+
+        // Badge de filtro global
+        var isFiltered = data.length < vulnsData.length;
+        if (badgeEl) {
+            badgeEl.innerHTML = isFiltered
+                ? '<span class="filtered-badge">filtrado: ' + data.length + '/' + vulnsData.length + ' scans</span>'
+                : '';
+        }
+
+        // Agregar finding_details — guardar URLs por vuln
+        var nameMap = {};
+        var hasDetails = false;
+
+        data.forEach(function(item) {
+            var details = item.finding_details || [];
+            if (details.length > 0) hasDetails = true;
+            details.forEach(function(d) {
+                var key = d.name || d.qid || 'Desconhecido';
+                if (!nameMap[key]) {
+                    nameMap[key] = { name: key, severity: d.severity || '', group: d.group || '', qid: d.qid || '', scans: 0, scanSet: {}, urls: [] };
+                }
+                var scanLabel = item.scan_label || item.scan_id;
+                if (!nameMap[key].scanSet[scanLabel]) {
+                    nameMap[key].scanSet[scanLabel] = true;
+                    nameMap[key].scans++;
+                    nameMap[key].urls.push({ url: item.url || '', port: item.port || '', scan: scanLabel, date: item.finished_date || '' });
+                }
+            });
+        });
+
+        if (!hasDetails) {
+            container.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:10px 0;">Aguardando dados de finding_details...</div>';
+            return;
+        }
+
+        var nameList = Object.values(nameMap);
+        nameList.forEach(function(n) { delete n.scanSet; });
+
+        // Aplicar filtro de severidade da secao (multisseleção)
+        if (vulnSevFilters.length > 0) {
+            nameList = nameList.filter(function(n) { return vulnSevFilters.indexOf(n.severity) !== -1; });
+        }
+
+        // Aplicar filtro de grupo (Security Weakness)
+        if (vulnGroupFilter) {
+            nameList = nameList.filter(function(n) {
+                return (n.group || '').toUpperCase().indexOf(vulnGroupFilter.toUpperCase()) !== -1;
+            });
+        }
+
+        nameList.sort(function(a, b) { return b.scans - a.scans; });
+
+        // Guardar para export
+        window._vulnNameList = nameList;
+
+        countEl.textContent = nameList.length + ' tipo(s)';
+
+        if (nameList.length === 0) {
+            container.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:10px 0;">Nenhuma vulnerabilidade encontrada' + (vulnSevFilters.length > 0 ? ' para a(s) severidade(s) selecionada(s)' : '') + '</div>';
+            return;
+        }
+
+        var maxScans = nameList[0].scans;
+
+        var html = '<table class="data-table" id="vulnnames-table"><thead><tr>'
+            + '<th style="cursor:default;">Vulnerabilidade</th>'
+            + '<th style="cursor:default;">Grupo</th>'
+            + '<th style="cursor:default;">QID</th>'
+            + '<th style="text-align:center;cursor:default;">Severidade</th>'
+            + '<th style="text-align:center;cursor:default;">Scans Afetados</th>'
+            + '<th style="min-width:120px;cursor:default;">Distribuicao</th>'
+            + '</tr></thead><tbody>';
+
+        nameList.forEach(function(item, idx) {
+            var sevClass = 'sev-' + (item.severity || 'minimal').toLowerCase();
+            var barPct = maxScans > 0 ? (item.scans / maxScans * 100).toFixed(0) : 0;
+            var sevColor = SEV_COLORS[item.severity] || 'var(--text-muted)';
+
+            html += '<tr class="vuln-row" onclick="toggleVulnUrls(this,' + idx + ')" title="Clique para ver as URLs afetadas">'
+                + '<td class="cell-mono" style="font-size:11px;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escapeAttr(item.name) + '">'
+                + '<span class="expand-arrow">&#9654;</span>' + escapeHtml(item.name) + '</td>'
+                + '<td style="font-size:11px;color:var(--text-muted);">' + escapeHtml(item.group) + '</td>'
+                + '<td class="cell-mono cell-num" style="font-size:10px;">' + escapeHtml(item.qid) + '</td>'
+                + '<td class="cell-num"><span class="cell-sev ' + sevClass + '" style="font-size:10px;padding:1px 6px;border-radius:4px;">' + escapeHtml(item.severity) + '</span></td>'
+                + '<td class="cell-num" style="font-weight:800;">' + item.scans + '</td>'
+                + '<td><div style="width:100%;height:14px;background:var(--bg-primary);border-radius:3px;overflow:hidden;">'
+                + '<div style="width:' + barPct + '%;height:100%;background:' + sevColor + ';border-radius:3px;"></div>'
+                + '</div></td>'
+                + '</tr>';
+
+            // Linha expandivel com URLs
+            var urlChips = item.urls.map(function(u) {
+                return '<span class="vuln-url-chip" title="' + escapeAttr(u.scan) + ' (' + u.date + ')">'
+                    + escapeHtml(u.url || u.scan)
+                    + (u.port ? '<span class="chip-port">:' + u.port + '</span>' : '')
+                    + '</span>';
+            }).join('');
+            html += '<tr class="vuln-urls-row" id="vuln-urls-' + idx + '">'
+                + '<td colspan="6"><div style="font-size:10px;color:var(--text-muted);margin-bottom:2px;">URLs afetadas (' + item.urls.length + '):</div>'
+                + '<div class="vuln-urls-list">' + urlChips + '</div></td></tr>';
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+
+    function toggleSevChip(btn) {
+        var sev = btn.getAttribute('data-sev');
+        var allBtn = document.querySelector('#vuln-sev-chips .sev-chip[data-sev=""]');
+        var sevBtns = document.querySelectorAll('#vuln-sev-chips .sev-chip[data-sev]:not([data-sev=""])');
+
+        if (sev === '') {
+            // "Todas" clicado — limpa tudo
+            vulnSevFilters = [];
+            sevBtns.forEach(function(b) { b.classList.remove('active'); });
+            allBtn.classList.add('active');
+        } else {
+            // Toggle da severidade
+            allBtn.classList.remove('active');
+            var idx = vulnSevFilters.indexOf(sev);
+            if (idx !== -1) {
+                vulnSevFilters.splice(idx, 1);
+                btn.classList.remove('active');
+            } else {
+                vulnSevFilters.push(sev);
+                btn.classList.add('active');
+            }
+            // Se nenhum selecionado, reativar "Todas"
+            if (vulnSevFilters.length === 0) {
+                allBtn.classList.add('active');
+            }
+        }
+        renderInsightVulnNames(filteredData);
+    }
+
+    function toggleGroupFilter() {
+        var btn = document.getElementById('chip-sw');
+        if (vulnGroupFilter) {
+            vulnGroupFilter = '';
+            btn.classList.remove('active');
+        } else {
+            vulnGroupFilter = 'SECURITY_WEAKNESS';
+            btn.classList.add('active');
+        }
+        renderInsightVulnNames(filteredData);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       INSIGHT: RESUMO ESTATISTICO
+       ══════════════════════════════════════════════════════════ */
+    function renderInsightStats(data) {
+        var container = document.getElementById('insight-stats');
+        if (data.length === 0) {
+            container.innerHTML = '<div style="color:var(--text-muted);font-size:12px;">Sem dados para analise.</div>';
+            return;
+        }
+
+        var totalScans = data.length;
+        var totalVulns = 0;
+        var totalAll = 0;
+        var scansWithFindings = 0;
+        var scansWithCritical = 0;
+        var sevTotals = {};
+        SEV_ORDER.forEach(function(s) { sevTotals[s] = 0; });
+
+        data.forEach(function(item) {
+            var v = getTotalVulns(item);
+            var a = getTotalAll(item);
+            totalVulns += v;
+            totalAll += a;
+            if (a > 0) scansWithFindings++;
+            if (getSevVulns(item, 'Urgent') > 0 || getSevVulns(item, 'High') > 0) scansWithCritical++;
+            SEV_ORDER.forEach(function(s) { sevTotals[s] += getSevVulns(item, s); });
+        });
+
+        var avgVulns = totalScans > 0 ? (totalVulns / totalScans).toFixed(1) : '0';
+        var pctWithFindings = totalScans > 0 ? (scansWithFindings / totalScans * 100).toFixed(0) : '0';
+        var pctCritical = totalScans > 0 ? (scansWithCritical / totalScans * 100).toFixed(0) : '0';
+
+        // Severidade mais comum
+        var mostCommon = SEV_ORDER[0];
+        SEV_ORDER.forEach(function(s) { if (sevTotals[s] > sevTotals[mostCommon]) mostCommon = s; });
+
+        var html = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;">';
+
+        // Card: Media
+        html += '<div>'
+            + '<div class="stat-row"><span class="stat-label">Media de vulns por scan</span><span class="stat-value" style="color:var(--accent);">' + avgVulns + '</span></div>'
+            + '<div class="stat-bar"><div class="stat-fill" style="width:' + Math.min(100, avgVulns * 2) + '%;background:var(--accent);"></div></div>'
+            + '</div>';
+
+        // Card: % com achados
+        html += '<div>'
+            + '<div class="stat-row"><span class="stat-label">Scans com achados</span><span class="stat-value" style="color:var(--success);">' + scansWithFindings + '/' + totalScans + ' (' + pctWithFindings + '%)</span></div>'
+            + '<div class="stat-bar"><div class="stat-fill" style="width:' + pctWithFindings + '%;background:var(--success);"></div></div>'
+            + '</div>';
+
+        // Card: % com criticos
+        html += '<div>'
+            + '<div class="stat-row"><span class="stat-label">Scans com Urgent/High</span><span class="stat-value" style="color:var(--danger);">' + scansWithCritical + '/' + totalScans + ' (' + pctCritical + '%)</span></div>'
+            + '<div class="stat-bar"><div class="stat-fill" style="width:' + pctCritical + '%;background:var(--danger);"></div></div>'
+            + '</div>';
+
+        // Card: Severidade mais comum
+        html += '<div>'
+            + '<div class="stat-row"><span class="stat-label">Severidade mais frequente</span><span class="stat-value" style="color:' + SEV_COLORS[mostCommon] + ';">' + mostCommon + ' (' + sevTotals[mostCommon] + ')</span></div>'
+            + '<div class="stat-bar"><div class="stat-fill" style="width:' + (totalVulns > 0 ? sevTotals[mostCommon] / totalVulns * 100 : 0).toFixed(0) + '%;background:' + SEV_COLORS[mostCommon] + ';"></div></div>'
+            + '</div>';
+
+        // Card: Total geral
+        html += '<div>'
+            + '<div class="stat-row"><span class="stat-label">Total de vulnerabilidades</span><span class="stat-value">' + totalVulns + '</span></div>'
+            + '</div>';
+
+        // Card: Total achados (vulns + sensitive + info)
+        html += '<div>'
+            + '<div class="stat-row"><span class="stat-label">Total achados (vulns + sensitive + info)</span><span class="stat-value">' + totalAll + '</span></div>'
+            + '</div>';
+
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       DETAIL TABLE (SORTABLE)
+       ══════════════════════════════════════════════════════════ */
+    function getSortValue(item, col) {
+        switch (col) {
+            case 'scan_label': return (item.scan_label || '').toLowerCase();
+            case 'url': return (item.url || '').toLowerCase();
+            case 'port': return item.port || 0;
+            case 'worker': return (item.worker || '').toLowerCase();
+            case 'urgent': return getSevVulns(item, 'Urgent');
+            case 'high': return getSevVulns(item, 'High');
+            case 'medium': return getSevVulns(item, 'Medium');
+            case 'low': return getSevVulns(item, 'Low');
+            case 'minimal': return getSevVulns(item, 'Minimal');
+            case 'total_vulns': return getTotalVulns(item);
+            case 'sw': return getSecWeaknessCount(item);
+            case 'info': return getInfo(item);
+            case 'finished_date': return item.finished_date || '';
+            default: return '';
+        }
+    }
+
+    function sortTable(col) {
+        if (sortCol === col) {
+            sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            sortCol = col;
+            sortDir = 'desc';
+        }
+        // Update header arrows
+        document.querySelectorAll('#detail-table th').forEach(function(th) {
+            th.classList.remove('sorted');
+            var arrow = th.querySelector('.sort-arrow');
+            if (arrow) arrow.innerHTML = '&#9650;';
+            if (th.getAttribute('data-col') === sortCol) {
+                th.classList.add('sorted');
+                if (arrow) arrow.innerHTML = sortDir === 'asc' ? '&#9650;' : '&#9660;';
+            }
+        });
+        renderDetailTable(filteredData);
+    }
+
+    function sevCell(val, sevClass) {
+        if (val === 0) return '<td class="cell-num sev-zero">0</td>';
+        return '<td class="cell-num cell-sev ' + sevClass + '">' + val + '</td>';
+    }
+
+    function renderDetailTable(data) {
+        var tbody = document.getElementById('detail-tbody');
+        var countEl = document.getElementById('table-count');
+        countEl.textContent = data.length + ' scan(s)';
+
+        var sorted = data.slice().sort(function(a, b) {
+            var va = getSortValue(a, sortCol);
+            var vb = getSortValue(b, sortCol);
+            var cmp = 0;
+            if (typeof va === 'number') cmp = va - vb;
+            else cmp = va < vb ? -1 : (va > vb ? 1 : 0);
+            return sortDir === 'asc' ? cmp : -cmp;
+        });
+
+        if (sorted.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="13" style="text-align:center;padding:20px;color:var(--text-muted);">Nenhum scan encontrado com os filtros aplicados</td></tr>';
+            return;
+        }
+
+        var html = sorted.map(function(item) {
+            var dns = extractDns(item.scan_label);
+            var urg = getSevVulns(item, 'Urgent');
+            var high = getSevVulns(item, 'High');
+            var med = getSevVulns(item, 'Medium');
+            var low = getSevVulns(item, 'Low');
+            var min = getSevVulns(item, 'Minimal');
+            var totalV = getTotalVulns(item);
+            var sw = getSecWeaknessCount(item);
+            var info = getInfo(item);
+
+            var srcBadge = item.source === 'historico'
+                ? '<span style="display:inline-block;font-size:9px;padding:1px 5px;border-radius:4px;background:var(--info-light);color:var(--info);font-weight:600;margin-left:4px;" title="Scan do historico (12 meses)">HIST</span>'
+                : '';
+
+            var swCell = sw === 0
+                ? '<td class="cell-num sev-zero">0</td>'
+                : '<td class="cell-num" style="font-weight:700;color:#7c3aed;">' + sw + '</td>';
+
+            return '<tr>'
+                + '<td class="cell-mono" title="' + escapeAttr(item.scan_label || '') + '">' + escapeHtml(dns) + srcBadge + '</td>'
+                + '<td class="cell-url cell-mono" title="' + escapeAttr(item.url || '') + '">' + escapeHtml(item.url || '') + '</td>'
+                + '<td class="cell-num">' + (item.port || '') + '</td>'
+                + '<td class="cell-mono" style="font-size:10px;" title="' + escapeAttr(item.worker || '') + '">' + escapeHtml(item.worker || '') + '</td>'
+                + sevCell(urg, 'sev-urgent')
+                + sevCell(high, 'sev-high')
+                + sevCell(med, 'sev-medium')
+                + sevCell(low, 'sev-low')
+                + sevCell(min, 'sev-minimal')
+                + '<td class="cell-num" style="font-weight:800;">' + totalV + '</td>'
+                + swCell
+                + '<td class="cell-num" style="color:var(--text-muted);">' + info + '</td>'
+                + '<td style="font-size:11px;white-space:nowrap;">' + escapeHtml(item.finished_date || '') + '</td>'
+                + '</tr>';
+        }).join('');
+
+        tbody.innerHTML = html;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       INSIGHT: SCORE DE RISCO POR URL
+       ══════════════════════════════════════════════════════════ */
+    function calcRiskScore(item) {
+        return getSevVulns(item, 'Urgent') * 10
+            + getSevVulns(item, 'High') * 5
+            + getSevVulns(item, 'Medium') * 2
+            + getSevVulns(item, 'Low') * 1;
+    }
+
+    function renderInsightRiskScore(data) {
+        var container = document.getElementById('insight-riskscore');
+        var scored = data.map(function(item) {
+            return { item: item, score: calcRiskScore(item) };
+        }).filter(function(s) { return s.score > 0; })
+          .sort(function(a, b) { return b.score - a.score; });
+
+        if (scored.length === 0) {
+            container.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:10px 0;">Nenhum score de risco</div>';
+            return;
+        }
+
+        var maxScore = scored[0].score;
+        var html = '<ul class="ranking-list">';
+        scored.slice(0, 10).forEach(function(s, i) {
+            var dns = extractDns(s.item.scan_label);
+            var riskClass = s.score >= 30 ? 'risk-high' : (s.score >= 10 ? 'risk-medium' : 'risk-low');
+            var riskColor = s.score >= 30 ? 'var(--danger)' : (s.score >= 10 ? 'var(--warning)' : 'var(--success)');
+            var pct = (s.score / maxScore * 100).toFixed(0);
+            html += '<li class="ranking-item">'
+                + '<span class="ranking-pos">' + (i + 1) + '</span>'
+                + '<span class="ranking-url" title="' + escapeAttr(s.item.url || dns) + '">' + escapeHtml(dns) + '</span>'
+                + '<div class="ranking-bar"><div style="width:' + pct + '%;height:100%;background:' + riskColor + ';border-radius:3px;"></div></div>'
+                + '<span class="ranking-count ' + riskClass + '">' + s.score + '</span></li>';
+        });
+        html += '</ul>';
+        if (scored.length > 10) html += '<div style="font-size:10px;color:var(--text-muted);margin-top:6px;">+ ' + (scored.length - 10) + ' URL(s) com score</div>';
+        container.innerHTML = html;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       INSIGHT: DISTRIBUICAO POR PORTA
+       ══════════════════════════════════════════════════════════ */
+    function renderInsightPorts(data) {
+        var container = document.getElementById('insight-ports');
+        var ports = {};
+        data.forEach(function(item) {
+            var p = item.port || 'N/A';
+            if (!ports[p]) ports[p] = { scans: 0, vulns: 0 };
+            ports[p].scans++;
+            ports[p].vulns += getTotalVulns(item);
+        });
+
+        var keys = Object.keys(ports).sort(function(a, b) { return ports[b].vulns - ports[a].vulns; });
+
+        if (keys.length === 0) {
+            container.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:10px 0;">Sem dados</div>';
+            return;
+        }
+
+        var maxV = Math.max(1, ports[keys[0]].vulns);
+        var html = '<table class="data-table"><thead><tr>'
+            + '<th>Porta</th><th style="text-align:center">Scans</th><th style="text-align:center">Vulns</th><th style="width:40%"></th>'
+            + '</tr></thead><tbody>';
+        keys.forEach(function(p) {
+            var d = ports[p];
+            var pct = (d.vulns / maxV * 100).toFixed(0);
+            html += '<tr><td class="cell-mono" style="font-weight:700;">' + escapeHtml(String(p)) + '</td>'
+                + '<td style="text-align:center;font-weight:700;">' + d.scans + '</td>'
+                + '<td style="text-align:center;font-weight:700;">' + d.vulns + '</td>'
+                + '<td><div class="stat-bar"><div class="stat-fill" style="width:' + pct + '%;background:var(--info);"></div></div></td></tr>';
+        });
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       INSIGHT: TIMELINE DE SCANS
+       ══════════════════════════════════════════════════════════ */
+    function renderInsightTimeline(data) {
+        var container = document.getElementById('insight-timeline');
+        // Agrupar por data
+        var dateMap = {};
+        data.forEach(function(item) {
+            var d = item.finished_date || 'N/A';
+            if (d === 'N/A') return;
+            if (!dateMap[d]) dateMap[d] = { vulns: 0, scans: 0 };
+            dateMap[d].vulns += getTotalVulns(item);
+            dateMap[d].scans++;
+        });
+
+        var dates = Object.keys(dateMap).sort();
+        if (dates.length < 1) {
+            container.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:10px 0;">Dados insuficientes para timeline</div>';
+            return;
+        }
+
+        var maxV = 1;
+        dates.forEach(function(d) { if (dateMap[d].vulns > maxV) maxV = dateMap[d].vulns; });
+
+        var w = 600, h = 160, padL = 40, padR = 10, padT = 15, padB = 30;
+        var plotW = w - padL - padR;
+        var plotH = h - padT - padB;
+
+        var points = dates.map(function(d, i) {
+            var x = padL + (dates.length > 1 ? i / (dates.length - 1) * plotW : plotW / 2);
+            var y = padT + plotH - (dateMap[d].vulns / maxV * plotH);
+            return { x: x, y: y, date: d, vulns: dateMap[d].vulns, scans: dateMap[d].scans };
+        });
+
+        var polyline = points.map(function(p) { return p.x.toFixed(1) + ',' + p.y.toFixed(1); }).join(' ');
+        var areaPath = 'M' + points[0].x.toFixed(1) + ',' + (padT + plotH) + ' L' + polyline + ' L' + points[points.length - 1].x.toFixed(1) + ',' + (padT + plotH) + 'Z';
+
+        var svg = '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="xMidYMid meet" style="max-height:180px;">';
+        // Grid lines
+        for (var g = 0; g <= 4; g++) {
+            var gy = padT + (plotH / 4) * g;
+            var gv = Math.round(maxV * (1 - g / 4));
+            svg += '<line x1="' + padL + '" y1="' + gy + '" x2="' + (w - padR) + '" y2="' + gy + '" stroke="var(--border)" stroke-width="0.5"/>';
+            svg += '<text x="' + (padL - 4) + '" y="' + (gy + 3) + '" text-anchor="end" fill="var(--text-muted)" font-size="8">' + gv + '</text>';
+        }
+        // Area
+        svg += '<path d="' + areaPath + '" fill="var(--accent-light)" opacity="0.5"/>';
+        // Line
+        svg += '<polyline points="' + polyline + '" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>';
+        // Dots + labels
+        points.forEach(function(p) {
+            svg += '<circle cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="3.5" fill="var(--accent)" stroke="var(--bg-card)" stroke-width="1.5">'
+                + '<title>' + escapeHtml(p.date) + ': ' + p.vulns + ' vulns (' + p.scans + ' scans)</title></circle>';
+        });
+        // Date labels
+        var labelStep = Math.max(1, Math.floor(dates.length / 8));
+        points.forEach(function(p, i) {
+            if (i % labelStep === 0 || i === points.length - 1) {
+                var shortDate = p.date.substring(5); // MM-DD
+                svg += '<text x="' + p.x.toFixed(1) + '" y="' + (h - 6) + '" text-anchor="middle" fill="var(--text-muted)" font-size="8">' + escapeHtml(shortDate) + '</text>';
+            }
+        });
+        svg += '</svg>';
+        container.innerHTML = svg;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       INSIGHT: VULNERABILIDADES RECORRENTES
+       ══════════════════════════════════════════════════════════ */
+    function renderInsightRecurrent(data) {
+        var card = document.getElementById('insight-recurrent-card');
+        var container = document.getElementById('insight-recurrent');
+
+        var nameMap = {};
+        data.forEach(function(item) {
+            var details = item.finding_details || [];
+            details.forEach(function(d) {
+                var key = d.name || d.qid || 'Desconhecido';
+                if (!nameMap[key]) {
+                    nameMap[key] = { name: key, severity: d.severity || '', qid: d.qid || '', scans: 0, scanSet: {} };
+                }
+                var scanLabel = item.scan_label || item.scan_id;
+                if (!nameMap[key].scanSet[scanLabel]) {
+                    nameMap[key].scanSet[scanLabel] = true;
+                    nameMap[key].scans++;
+                }
+            });
+        });
+
+        var recurrent = Object.values(nameMap).filter(function(n) { return n.scans > 1; });
+        recurrent.sort(function(a, b) { return b.scans - a.scans; });
+
+        if (recurrent.length === 0) {
+            card.style.display = 'none';
+            return;
+        }
+        card.style.display = '';
+
+        var maxScans = recurrent[0].scans;
+        var html = '<div style="font-size:12px;color:var(--warning);font-weight:700;margin-bottom:8px;">'
+            + recurrent.length + ' vulnerabilidade(s) aparecem em mais de 1 scan — indicam problemas sistmicos</div>';
+        html += '<div class="insight-table-wrapper"><table class="data-table"><thead><tr>'
+            + '<th style="cursor:default;">Vulnerabilidade</th>'
+            + '<th style="text-align:center;cursor:default;">QID</th>'
+            + '<th style="text-align:center;cursor:default;">Severidade</th>'
+            + '<th style="text-align:center;cursor:default;">Scans</th>'
+            + '<th style="min-width:100px;cursor:default;">Frequencia</th>'
+            + '</tr></thead><tbody>';
+        recurrent.slice(0, 30).forEach(function(item) {
+            var sevClass = 'sev-' + (item.severity || 'minimal').toLowerCase();
+            var pct = (item.scans / maxScans * 100).toFixed(0);
+            var sevColor = SEV_COLORS[item.severity] || 'var(--text-muted)';
+            html += '<tr>'
+                + '<td class="cell-mono" style="font-size:11px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escapeAttr(item.name) + '">' + escapeHtml(item.name) + '</td>'
+                + '<td class="cell-mono cell-num" style="font-size:10px;">' + escapeHtml(item.qid) + '</td>'
+                + '<td class="cell-num"><span class="cell-sev ' + sevClass + '" style="font-size:10px;padding:1px 6px;border-radius:4px;">' + escapeHtml(item.severity) + '</span></td>'
+                + '<td class="cell-num" style="font-weight:800;">' + item.scans + '</td>'
+                + '<td><div style="width:100%;height:14px;background:var(--bg-primary);border-radius:3px;overflow:hidden;">'
+                + '<div style="width:' + pct + '%;height:100%;background:' + sevColor + ';border-radius:3px;"></div></div></td>'
+                + '</tr>';
+        });
+        html += '</tbody></table></div>';
+        if (recurrent.length > 30) html += '<div style="font-size:10px;color:var(--text-muted);margin-top:4px;">Exibindo 30 de ' + recurrent.length + '</div>';
+        container.innerHTML = html;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       EXPORT: CSV GENERICO
+       ══════════════════════════════════════════════════════════ */
+    // Sanitiza celula CSV contra formula injection (=, +, -, @, \t, \r)
+    function sanitizeCsvCell(cell) {
+        var s = String(cell == null ? '' : cell);
+        if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+        return '"' + s.replace(/"/g, '""') + '"';
+    }
+
+    function exportSectionCsv(filename, headers, rows) {
+        var bom = '\uFEFF';
+        var csv = bom + headers.map(sanitizeCsvCell).join(';') + '\n';
+        rows.forEach(function(row) {
+            csv += row.map(sanitizeCsvCell).join(';') + '\n';
+        });
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+    }
+
+    function exportDetailTable() {
+        var headers = ['Scan', 'URL', 'Porta', 'Worker', 'Urgent', 'High', 'Medium', 'Low', 'Minimal', 'Total', 'Security Weakness', 'Info', 'Data'];
+        var rows = filteredData.map(function(item) {
+            return [
+                item.scan_label || '', item.url || '', item.port || '',
+                item.worker || '', getSevVulns(item, 'Urgent'), getSevVulns(item, 'High'),
+                getSevVulns(item, 'Medium'), getSevVulns(item, 'Low'), getSevVulns(item, 'Minimal'),
+                getTotalVulns(item), getSecWeaknessCount(item), getInfo(item), item.finished_date || ''
+            ];
+        });
+        exportSectionCsv('vulns_detalhes.csv', headers, rows);
+    }
+
+    function exportTop5() {
+        var sorted = filteredData.slice().sort(function(a, b) { return getTotalVulns(b) - getTotalVulns(a); });
+        var top = sorted.slice(0, 5);
+        var headers = ['URL', 'Scan', 'Total Vulns', 'Urgent', 'High', 'Medium', 'Low', 'Minimal'];
+        var rows = top.map(function(item) {
+            return [item.url || '', item.scan_label || '', getTotalVulns(item),
+                getSevVulns(item, 'Urgent'), getSevVulns(item, 'High'), getSevVulns(item, 'Medium'),
+                getSevVulns(item, 'Low'), getSevVulns(item, 'Minimal')];
+        });
+        exportSectionCsv('vulns_top5.csv', headers, rows);
+    }
+
+    function exportWorkers() {
+        var workers = {};
+        filteredData.forEach(function(item) {
+            var w = item.worker || 'N/A';
+            if (!workers[w]) workers[w] = { scans: 0, vulns: 0 };
+            workers[w].scans++;
+            workers[w].vulns += getTotalVulns(item);
+        });
+        var headers = ['Worker', 'Scans', 'Total Vulns'];
+        var rows = Object.keys(workers).sort(function(a, b) { return workers[b].vulns - workers[a].vulns; })
+            .map(function(w) { return [w, workers[w].scans, workers[w].vulns]; });
+        exportSectionCsv('vulns_workers.csv', headers, rows);
+    }
+
+    function exportRiskScore() {
+        var scored = filteredData.map(function(item) { return { item: item, score: calcRiskScore(item) }; })
+            .filter(function(s) { return s.score > 0; })
+            .sort(function(a, b) { return b.score - a.score; });
+        var headers = ['URL', 'Scan', 'Score', 'Urgent', 'High', 'Medium', 'Low'];
+        var rows = scored.map(function(s) {
+            return [s.item.url || '', s.item.scan_label || '', s.score,
+                getSevVulns(s.item, 'Urgent'), getSevVulns(s.item, 'High'),
+                getSevVulns(s.item, 'Medium'), getSevVulns(s.item, 'Low')];
+        });
+        exportSectionCsv('vulns_riskscore.csv', headers, rows);
+    }
+
+    function exportPorts() {
+        var ports = {};
+        filteredData.forEach(function(item) {
+            var p = item.port || 'N/A';
+            if (!ports[p]) ports[p] = { scans: 0, vulns: 0 };
+            ports[p].scans++;
+            ports[p].vulns += getTotalVulns(item);
+        });
+        var headers = ['Porta', 'Scans', 'Total Vulns'];
+        var rows = Object.keys(ports).sort(function(a, b) { return ports[b].vulns - ports[a].vulns; })
+            .map(function(p) { return [p, ports[p].scans, ports[p].vulns]; });
+        exportSectionCsv('vulns_portas.csv', headers, rows);
+    }
+
+    function exportCritical() {
+        var criticals = filteredData.filter(function(item) {
+            return getSevVulns(item, 'Urgent') > 0 || getSevVulns(item, 'High') > 0;
+        });
+        var headers = ['Scan', 'URL', 'Urgent', 'High', 'Worker', 'Data'];
+        var rows = criticals.map(function(item) {
+            return [item.scan_label || '', item.url || '', getSevVulns(item, 'Urgent'),
+                getSevVulns(item, 'High'), item.worker || '', item.finished_date || ''];
+        });
+        exportSectionCsv('vulns_criticos.csv', headers, rows);
+    }
+
+    function exportEmptyScans() {
+        var empties = filteredData.filter(function(item) { return getTotalAll(item) === 0; });
+        var headers = ['Scan', 'URL', 'Worker', 'Porta', 'Data'];
+        var rows = empties.map(function(item) {
+            return [item.scan_label || '', item.url || '', item.worker || '', item.port || '', item.finished_date || ''];
+        });
+        exportSectionCsv('vulns_sem_achados.csv', headers, rows);
+    }
+
+    function exportRecurrent() {
+        var nameMap = {};
+        filteredData.forEach(function(item) {
+            (item.finding_details || []).forEach(function(d) {
+                var key = d.name || d.qid || 'Desconhecido';
+                if (!nameMap[key]) nameMap[key] = { name: key, severity: d.severity || '', qid: d.qid || '', scans: 0, scanSet: {} };
+                var sl = item.scan_label || item.scan_id;
+                if (!nameMap[key].scanSet[sl]) { nameMap[key].scanSet[sl] = true; nameMap[key].scans++; }
+            });
+        });
+        var recurrent = Object.values(nameMap).filter(function(n) { return n.scans > 1; })
+            .sort(function(a, b) { return b.scans - a.scans; });
+        var headers = ['Vulnerabilidade', 'QID', 'Severidade', 'Scans Afetados'];
+        var rows = recurrent.map(function(n) { return [n.name, n.qid, n.severity, n.scans]; });
+        exportSectionCsv('vulns_recorrentes.csv', headers, rows);
+    }
+
+    function toggleVulnUrls(clickedRow, idx) {
+        var urlsRow = document.getElementById('vuln-urls-' + idx);
+        if (!urlsRow) return;
+        var table = document.getElementById('vulnnames-table');
+        var allVulnRows = table.querySelectorAll('.vuln-row');
+        var allUrlsRows = table.querySelectorAll('.vuln-urls-row');
+
+        if (urlsRow.classList.contains('visible')) {
+            // Fechar
+            urlsRow.classList.remove('visible');
+            clickedRow.classList.remove('selected');
+        } else {
+            // Fechar todos antes
+            allUrlsRows.forEach(function(r) { r.classList.remove('visible'); });
+            allVulnRows.forEach(function(r) { r.classList.remove('selected'); });
+            // Abrir selecionado
+            urlsRow.classList.add('visible');
+            clickedRow.classList.add('selected');
+            // Scroll a linha expandida para visibilidade
+            setTimeout(function() { urlsRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 50);
+        }
+    }
+
+    function exportVulnNames() {
+        var list = window._vulnNameList || [];
+        var headers = ['Vulnerabilidade', 'Grupo', 'QID', 'Severidade', 'Scans Afetados', 'URLs Afetadas'];
+        var rows = list.map(function(n) {
+            var urls = (n.urls || []).map(function(u) { return u.url || u.scan; }).join(' | ');
+            return [n.name, n.group, n.qid, n.severity, n.scans, urls];
+        });
+        exportSectionCsv('vulns_distribuicao.csv', headers, rows);
+    }
+
+    function exportStats() {
+        var data = filteredData;
+        var totalScans = data.length;
+        var totalVulns = 0, totalAll = 0, scansWithFindings = 0, scansWithCritical = 0;
+        var sevTotals = {}; SEV_ORDER.forEach(function(s) { sevTotals[s] = 0; });
+        data.forEach(function(item) {
+            totalVulns += getTotalVulns(item);
+            totalAll += getTotalAll(item);
+            if (getTotalAll(item) > 0) scansWithFindings++;
+            if (getSevVulns(item, 'Urgent') > 0 || getSevVulns(item, 'High') > 0) scansWithCritical++;
+            SEV_ORDER.forEach(function(s) { sevTotals[s] += getSevVulns(item, s); });
+        });
+        var avgVulns = totalScans > 0 ? (totalVulns / totalScans).toFixed(1) : '0';
+        var headers = ['Metrica', 'Valor'];
+        var rows = [
+            ['Total de Scans', totalScans],
+            ['Total de Vulnerabilidades', totalVulns],
+            ['Total de Achados (vulns + sensitive + info)', totalAll],
+            ['Media de Vulns por Scan', avgVulns],
+            ['Scans com Achados', scansWithFindings + '/' + totalScans],
+            ['Scans com Urgent/High', scansWithCritical + '/' + totalScans]
+        ];
+        SEV_ORDER.forEach(function(s) { rows.push([s, sevTotals[s]]); });
+        exportSectionCsv('vulns_resumo.csv', headers, rows);
+    }
+
+    function exportAll() {
+        var bom = '\uFEFF';
+        var csv = bom;
+
+        // Secao 1: Tabela Detalhada
+        csv += '=== TABELA DETALHADA ===\n';
+        csv += 'Scan;URL;Porta;Worker;Urgent;High;Medium;Low;Minimal;Total;Security Weakness;Info;Data\n';
+        filteredData.forEach(function(item) {
+            csv += [item.scan_label, item.url, item.port, item.worker,
+                getSevVulns(item, 'Urgent'), getSevVulns(item, 'High'), getSevVulns(item, 'Medium'),
+                getSevVulns(item, 'Low'), getSevVulns(item, 'Minimal'), getTotalVulns(item),
+                getSecWeaknessCount(item), getInfo(item), item.finished_date]
+                .map(sanitizeCsvCell).join(';') + '\n';
+        });
+
+        // Secao 2: Distribuicao por Vulnerabilidade
+        csv += '\n=== DISTRIBUICAO POR VULNERABILIDADE ===\n';
+        csv += 'Vulnerabilidade;Grupo;QID;Severidade;Scans Afetados;URLs Afetadas\n';
+        var list = window._vulnNameList || [];
+        list.forEach(function(n) {
+            var urls = (n.urls || []).map(function(u) { return u.url || u.scan; }).join(' | ');
+            csv += [n.name, n.group, n.qid, n.severity, n.scans, urls]
+                .map(sanitizeCsvCell).join(';') + '\n';
+        });
+
+        var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'vulns_completo.csv';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       NAVEGABILIDADE: SCROLL, BACK-TO-TOP, COLLAPSE
+       ══════════════════════════════════════════════════════════ */
+    function scrollToSection(e, id) {
+        e.preventDefault();
+        var el = document.getElementById(id);
+        if (el) {
+            var offset = 110; // header + section-nav
+            var top = el.getBoundingClientRect().top + window.pageYOffset - offset;
+            window.scrollTo({ top: top, behavior: 'smooth' });
+        }
+    }
+
+    function toggleCollapse(btn) {
+        var body = btn.closest('.section-header').nextElementSibling;
+        if (!body) {
+            // try finding .section-body sibling
+            var parent = btn.closest('.card');
+            if (parent) body = parent.querySelector('.section-body');
+        }
+        if (body) {
+            body.classList.toggle('collapsed');
+            btn.textContent = body.classList.contains('collapsed') ? '\u25B6' : '\u25BC';
+        }
+    }
+
+    // Back to top visibility
+    window.addEventListener('scroll', function() {
+        var btn = document.getElementById('back-to-top');
+        if (window.scrollY > 400) {
+            btn.classList.add('visible');
+        } else {
+            btn.classList.remove('visible');
+        }
+    });
+
+    // Section nav active tracking via IntersectionObserver
+    (function() {
+        var sections = ['sec-summary', 'sec-charts', 'sec-insights', 'sec-detail', 'sec-vulnnames'];
+        var navLinks = document.querySelectorAll('.section-nav a');
+        if (!('IntersectionObserver' in window)) return;
+
+        var observer = new IntersectionObserver(function(entries) {
+            entries.forEach(function(entry) {
+                if (entry.isIntersecting) {
+                    navLinks.forEach(function(link) { link.classList.remove('active-section'); });
+                    var activeLink = document.querySelector('.section-nav a[href="#' + entry.target.id + '"]');
+                    if (activeLink) activeLink.classList.add('active-section');
+                }
+            });
+        }, { rootMargin: '-120px 0px -60% 0px', threshold: 0 });
+
+        sections.forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) observer.observe(el);
+        });
+    })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,2007 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <title>Qualys Schedule - Dashboard</title>
+    <style>
+        :root {
+            --bg-primary: #f5f7fa;
+            --bg-secondary: #ffffff;
+            --bg-card: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #555770;
+            --text-muted: #8e8ea0;
+            --border: #e2e4e9;
+            --accent: #4f46e5;
+            --accent-light: #e0e7ff;
+            --success: #059669;
+            --success-light: #d1fae5;
+            --warning: #d97706;
+            --warning-light: #fef3c7;
+            --danger: #dc2626;
+            --danger-light: #fee2e2;
+            --info: #2563eb;
+            --info-light: #dbeafe;
+            --log-bg: #1e1e2e;
+            --log-text: #cdd6f4;
+            --log-timestamp: #89b4fa;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+            --shadow-lg: 0 4px 12px rgba(0,0,0,0.1);
+            --radius: 10px;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #16213e;
+            --text-primary: #e2e8f0;
+            --text-secondary: #a0aec0;
+            --text-muted: #718096;
+            --border: #2d3748;
+            --accent: #818cf8;
+            --accent-light: #1e1b4b;
+            --success: #34d399;
+            --success-light: #064e3b;
+            --warning: #fbbf24;
+            --warning-light: #78350f;
+            --danger: #f87171;
+            --danger-light: #7f1d1d;
+            --info: #60a5fa;
+            --info-light: #1e3a5f;
+            --log-bg: #0a0a14;
+            --log-text: #cdd6f4;
+            --log-timestamp: #89b4fa;
+            --shadow: 0 1px 3px rgba(0,0,0,0.3);
+            --shadow-lg: 0 4px 12px rgba(0,0,0,0.4);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        /* ── Header ────────────────────────────────────────── */
+        .header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+            padding: 12px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-logo {
+            width: 32px;
+            height: 32px;
+            background: var(--accent);
+            border-radius: 7px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .header h1 {
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .header h1 span { color: var(--accent); }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-badge.online { background: var(--success-light); color: var(--success); }
+        .status-badge.setup-active { background: var(--warning-light); color: var(--warning); }
+
+        .status-badge .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* ── Theme Toggle ──────────────────────────────────── */
+        .theme-toggle {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 3px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            width: 48px;
+            height: 26px;
+            position: relative;
+            transition: background 0.3s;
+        }
+
+        .theme-toggle .toggle-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent);
+            position: absolute;
+            left: 3px;
+            transition: transform 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+        }
+
+        [data-theme="dark"] .theme-toggle .toggle-thumb {
+            transform: translateX(22px);
+        }
+
+        /* ── Main Layout ───────────────────────────────────── */
+        .main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px 32px;
+        }
+
+        /* ── Cards ─────────────────────────────────────────── */
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            box-shadow: var(--shadow);
+            transition: background 0.3s, border-color 0.3s;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+        }
+
+        .section-count {
+            font-size: 11px;
+            background: var(--accent-light);
+            color: var(--accent);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        /* ── URL Input Section ─────────────────────────────── */
+        .url-input-card {
+            border: 1px solid var(--accent);
+            padding: 0;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .url-input-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+        }
+
+        .url-input-header .section-title {
+            margin-bottom: 0;
+        }
+
+        .btn-clear {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 11px;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-weight: 500;
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .btn-clear:hover {
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+
+        .url-textarea {
+            width: 100%;
+            min-height: 180px;
+            max-height: 360px;
+            resize: vertical;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 12.5px;
+            line-height: 1.7;
+            padding: 12px 20px;
+            border: none;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            outline: none;
+            transition: background 0.3s;
+        }
+
+        .url-textarea::placeholder {
+            color: var(--text-muted);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-size: 13px;
+        }
+
+        .url-input-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            border-top: 1px solid var(--border);
+            background: var(--bg-secondary);
+        }
+
+        .url-count {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .url-count strong {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        /* ── Buttons ───────────────────────────────────────── */
+        .btn-start {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #ffffff;
+            background: var(--accent);
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: opacity 0.15s, transform 0.1s;
+            letter-spacing: 0.2px;
+        }
+
+        .btn-start:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-start:active { transform: translateY(0); }
+
+        .btn-start:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-start .btn-icon { font-size: 13px; }
+
+        .btn-sm {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.15s;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+        }
+
+        .btn-sm:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .btn-sm:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .btn-sm.btn-success {
+            border-color: var(--success);
+            color: var(--success);
+            background: var(--success-light);
+        }
+
+        .btn-export {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #ffffff;
+            background: var(--success);
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: opacity 0.15s;
+            text-decoration: none;
+        }
+
+        .btn-export:hover { opacity: 0.85; }
+
+        /* ── Setup Progress ────────────────────────────────── */
+        .setup-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+            border-color: var(--warning);
+            border-style: dashed;
+        }
+
+        .setup-card .spinner {
+            width: 22px;
+            height: 22px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .setup-text strong {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        .setup-text span {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* ── Summary Cards ─────────────────────────────────── */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .summary-card { text-align: center; padding: 14px 12px; }
+
+        .summary-card .card-value {
+            font-size: 28px;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .summary-card .card-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .summary-card.total .card-value { color: var(--accent); }
+        .summary-card.scanning .card-value { color: var(--info); }
+        .summary-card.completed .card-value { color: var(--success); }
+        .summary-card.skipped .card-value { color: var(--warning); }
+        .summary-card.pending .card-value { color: var(--text-muted); }
+
+        /* ── Grid Layout ───────────────────────────────────── */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        /* ── Tables ────────────────────────────────────────── */
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .data-table th {
+            text-align: left;
+            padding: 8px 12px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+            font-weight: 600;
+        }
+
+        .data-table td {
+            padding: 8px 12px;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table tr:last-child td { border-bottom: none; }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 5px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge.scanning { background: var(--info-light); color: var(--info); }
+        .badge.waiting { background: var(--warning-light); color: var(--warning); }
+        .badge.available { background: var(--success-light); color: var(--success); }
+        .badge.downloading { background: var(--info-light); color: var(--info); }
+        .badge.done { background: var(--success-light); color: var(--success); }
+        .badge.error { background: var(--danger-light); color: var(--danger); }
+
+        /* ── URL Lists ─────────────────────────────────────── */
+        .url-list {
+            max-height: 220px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .url-list::-webkit-scrollbar { width: 5px; }
+        .url-list::-webkit-scrollbar-track { background: transparent; }
+        .url-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        .url-item {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            margin-bottom: 4px;
+            word-break: break-all;
+            overflow-wrap: anywhere;
+            line-height: 1.5;
+        }
+
+        .url-item.completed { background: var(--success-light); color: var(--success); }
+        .url-item.skipped { background: var(--danger-light); color: var(--danger); }
+        .url-item.skipped-warning { background: var(--bg-primary); color: var(--text-secondary); border-left: 3px solid var(--warning); }
+        .url-item.pending { background: var(--bg-primary); color: var(--text-secondary); }
+        .url-item.skipped-api { background: var(--danger-light); color: var(--danger); border-left: 3px solid var(--danger); }
+        .url-item.skipped-dns { background: var(--warning-light); color: var(--warning); border-left: 3px solid var(--warning); }
+        .url-item.skipped-ignored { background: var(--bg-primary); color: var(--text-muted); border-left: 3px solid var(--text-muted); }
+        .url-item.skipped-report { background: var(--danger-light); color: var(--danger); border-left: 3px solid var(--danger); }
+
+        .url-item .icon { flex-shrink: 0; font-size: 12px; }
+
+        .url-item .url-text {
+            flex: 1;
+            min-width: 0;
+            word-break: break-all;
+            overflow-wrap: anywhere;
+        }
+
+        .url-item .error-detail {
+            width: 100%;
+            font-size: 11px;
+            opacity: 0.8;
+            padding-left: 20px;
+            word-break: break-all;
+            overflow-wrap: anywhere;
+            margin-top: 2px;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        .url-item .meta {
+            margin-left: auto;
+            font-size: 10px;
+            color: var(--text-muted);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ── Errors Section ────────────────────────────────── */
+        .errors-card {
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .errors-card > .section-header {
+            padding: 16px 20px;
+            margin-bottom: 0;
+        }
+
+        .errors-body {
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 0 16px 16px;
+        }
+
+        .errors-body::-webkit-scrollbar { width: 5px; }
+        .errors-body::-webkit-scrollbar-track { background: transparent; }
+        .errors-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        .error-block {
+            margin-bottom: 16px;
+        }
+
+        .error-block:last-child { margin-bottom: 0; }
+
+        .error-block-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 0 6px;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 6px;
+        }
+
+        .error-block-header .block-icon {
+            font-size: 13px;
+        }
+
+        .error-block-header .block-count {
+            margin-left: auto;
+            background: var(--bg-primary);
+            padding: 1px 7px;
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .error-block-header.danger { color: var(--danger); }
+        .error-block-header.danger .block-count { background: var(--danger-light); color: var(--danger); }
+        .error-block-header.warning { color: var(--warning); }
+        .error-block-header.warning .block-count { background: var(--warning-light); color: var(--warning); }
+        .error-block-header.muted { color: var(--text-muted); }
+        .error-block-header.muted .block-count { background: var(--bg-primary); color: var(--text-muted); }
+
+        /* ── Export Alert ──────────────────────────────────── */
+        .export-alert {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            border-radius: var(--radius);
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 12px;
+            border: 1px solid;
+        }
+
+        .export-alert.visible { display: flex; }
+
+        .export-alert.alert-danger {
+            background: var(--danger-light);
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+
+        .export-alert .alert-icon { font-size: 15px; flex-shrink: 0; }
+        .export-alert .alert-text { flex: 1; }
+
+        .export-alert .alert-close {
+            background: none;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            color: inherit;
+            opacity: 0.7;
+            padding: 0 4px;
+        }
+
+        .export-alert .alert-close:hover { opacity: 1; }
+
+        /* ── Log Monitor ───────────────────────────────────── */
+        .log-card {
+            padding: 0;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .log-card-header {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .log-card-header .section-header { margin-bottom: 0; }
+
+        .log-container {
+            background: var(--log-bg);
+            padding: 12px 16px;
+            height: 280px;
+            overflow-y: auto;
+            font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.7;
+        }
+
+        .log-container::-webkit-scrollbar { width: 6px; }
+        .log-container::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); border-radius: 3px; }
+        .log-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+
+        .log-line { color: var(--log-text); padding: 1px 0; }
+
+        .log-line .ts {
+            color: var(--log-timestamp);
+            margin-right: 8px;
+            user-select: none;
+        }
+
+        .log-line.error { color: #f38ba8; }
+        .log-line.success { color: #a6e3a1; }
+        .log-line.warning { color: #f9e2af; }
+
+        /* ── Empty State ───────────────────────────────────── */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .empty-state .empty-icon {
+            font-size: 24px;
+            margin-bottom: 6px;
+            opacity: 0.5;
+        }
+
+        /* ── Auth / Login ──────────────────────────────────── */
+        .auth-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 140px);
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 400px;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .auth-header {
+            padding: 24px 28px 16px;
+            text-align: center;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+        }
+
+        .auth-header .auth-logo {
+            width: 48px;
+            height: 48px;
+            background: var(--accent);
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 22px;
+            margin-bottom: 12px;
+        }
+
+        .auth-header h2 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .auth-header p {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .auth-body {
+            padding: 24px 28px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 9px 12px;
+            font-size: 13px;
+            font-family: inherit;
+            border: 1px solid var(--border);
+            border-radius: 7px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-input:focus {
+            border-color: var(--accent);
+        }
+
+        .form-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-hint {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        .btn-auth {
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            background: var(--accent);
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: opacity 0.15s;
+            margin-top: 8px;
+        }
+
+        .btn-auth:hover { opacity: 0.9; }
+
+        .btn-auth:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .auth-error {
+            display: none;
+            padding: 8px 12px;
+            background: var(--danger-light);
+            color: var(--danger);
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+
+        .auth-error.visible { display: block; }
+
+        /* ── Add URLs (running phase) ────────────────────── */
+        .add-urls-card {
+            border: 1px dashed var(--accent);
+            padding: 0;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .add-urls-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+        }
+
+        .add-urls-header .section-title { margin-bottom: 0; }
+
+        .add-urls-body {
+            display: flex;
+            gap: 10px;
+            padding: 12px 20px;
+            align-items: flex-start;
+        }
+
+        .add-urls-body textarea {
+            flex: 1;
+            min-height: 60px;
+            max-height: 120px;
+            resize: vertical;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 12px;
+            line-height: 1.5;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            outline: none;
+        }
+
+        .add-urls-body textarea:focus {
+            border-color: var(--accent);
+        }
+
+        .add-urls-body textarea::placeholder {
+            color: var(--text-muted);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-size: 12px;
+        }
+
+        /* ── Export Bar ──────────────────────────────────── */
+        .export-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            margin-bottom: 16px;
+            background: var(--success-light);
+            border: 1px solid var(--success);
+        }
+
+        .export-bar .export-info {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--success);
+        }
+
+        .export-bar .export-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* ── Phase Visibility ──────────────────────────────── */
+        .phase-hidden { display: none !important; }
+
+        /* ── Footer ────────────────────────────────────────── */
+        .footer {
+            text-align: center;
+            padding: 16px;
+            color: var(--text-muted);
+            font-size: 11px;
+            border-top: 1px solid var(--border);
+            margin-top: 16px;
+        }
+
+        /* ── Responsive ────────────────────────────────────── */
+        @media (max-width: 1024px) {
+            .summary-grid { grid-template-columns: repeat(3, 1fr); }
+            .content-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 640px) {
+            .summary-grid { grid-template-columns: repeat(2, 1fr); }
+            .header { padding: 10px 16px; }
+            .main { padding: 12px 16px; }
+            .url-item { padding: 6px 8px; font-size: 11px; }
+            .errors-body { padding: 0 10px 10px; }
+        }
+
+        /* ── Report Side Panel ────────────────────────────── */
+        .report-panel {
+            position: fixed;
+            top: 0;
+            right: -380px;
+            width: 370px;
+            height: 100vh;
+            background: var(--bg-card);
+            border-left: 1px solid var(--border);
+            box-shadow: -4px 0 16px rgba(0,0,0,0.12);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            transition: right 0.3s ease;
+        }
+        .report-panel.active { right: 0; }
+
+        [data-theme="dark"] .report-panel {
+            box-shadow: -4px 0 16px rgba(0,0,0,0.4);
+        }
+
+        .report-panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+            font-weight: 600;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .report-panel-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-muted);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .report-panel-close:hover { background: var(--danger-light); color: var(--danger); }
+
+        .report-panel-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        .report-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        .report-step-icon {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .report-step.pending .report-step-icon { background: var(--border); color: var(--text-muted); }
+        .report-step.running .report-step-icon { background: var(--info-light); color: var(--info); animation: pulse 1.5s infinite; }
+        .report-step.success .report-step-icon { background: var(--success-light); color: var(--success); }
+        .report-step.error .report-step-icon   { background: var(--danger-light); color: var(--danger); }
+
+        .report-step-content { flex: 1; min-width: 0; }
+        .report-step-title { font-weight: 600; }
+        .report-step-detail {
+            color: var(--text-muted);
+            font-size: 12px;
+            margin-top: 2px;
+            word-break: break-all;
+        }
+        .report-step.error .report-step-detail { color: var(--danger); }
+
+        .report-panel-log {
+            flex-shrink: 0;
+            border-top: 1px solid var(--border);
+            max-height: 40vh;
+            overflow-y: auto;
+            background: var(--log-bg);
+            padding: 10px 14px;
+            font-family: 'Cascadia Code', 'Consolas', monospace;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        .report-panel-log::-webkit-scrollbar { width: 5px; }
+        .report-panel-log::-webkit-scrollbar-track { background: transparent; }
+        .report-panel-log::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+
+        .report-log-line { color: var(--log-text); padding: 1px 0; }
+        .report-log-line.info { color: var(--log-timestamp); }
+        .report-log-line.ok { color: #a6e3a1; }
+        .report-log-line.err { color: #f38ba8; }
+
+        .report-panel-footer {
+            padding: 10px 16px;
+            border-top: 1px solid var(--border);
+            text-align: right;
+            flex-shrink: 0;
+            background: var(--bg-secondary);
+        }
+
+        /* ── Navigation ─────────────────────────────────────── */
+        .nav-links { display: flex; gap: 4px; margin-left: 16px; }
+        .nav-links a {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.15s;
+        }
+        .nav-links a:hover { background: var(--accent-light); color: var(--accent); }
+        .nav-links a.active { background: var(--accent); color: #fff; }
+    </style>
+</head>
+<body>
+    <!-- ── Header ──────────────────────────────────────────── -->
+    <div class="header">
+        <div class="header-left">
+            <div class="header-logo">Q</div>
+            <h1>Qualys <span>Schedule</span></h1>
+            <div class="nav-links">
+                <a href="/" class="active">Dashboard</a>
+                <a href="/historico.html">Historico</a>
+                <a href="/vulns.html">Vulns</a>
+                <a href="/reports.html">Reports</a>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="status-badge online" id="status-badge">
+                <span class="dot"></span>
+                <span id="status-text">Aguardando inicio</span>
+            </div>
+            <div class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
+                <div class="toggle-thumb" id="theme-icon">&#9790;</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="main">
+        <!-- ── Auth / Login (phase: auth) ──────────────────── -->
+        <div id="auth-section" data-phases="auth">
+            <div class="auth-wrapper">
+                <div class="card auth-card">
+                    <div class="auth-header">
+                        <div class="auth-logo">Q</div>
+                        <h2>Qualys Schedule</h2>
+                        <p>Informe suas credenciais para continuar</p>
+                    </div>
+                    <div class="auth-body">
+                        <div class="auth-error" id="auth-error">Credenciais invalidas. Verifique e tente novamente.</div>
+                        <div class="form-group">
+                            <label for="auth-user">Login</label>
+                            <input type="text" id="auth-user" class="form-input" placeholder="Usuario Qualys" autocomplete="username">
+                        </div>
+                        <div class="form-group">
+                            <label for="auth-pass">Senha</label>
+                            <input type="password" id="auth-pass" class="form-input" placeholder="Senha" autocomplete="current-password">
+                        </div>
+                        <div class="form-group">
+                            <label for="auth-token">Token de autenticacao</label>
+                            <input type="text" id="auth-token" class="form-input" placeholder="Token (opcional)">
+                            <div class="form-hint">Caso utilize autenticacao via token</div>
+                        </div>
+                        <button class="btn-auth" id="btn-auth" onclick="submitAuth()">Entrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── URL Input (phase: ready) ────────────────────── -->
+        <div id="url-input-section" data-phases="ready">
+            <div class="card url-input-card">
+                <div class="url-input-header">
+                    <span class="section-title">Inclusao de URL's para scans</span>
+                    <button class="btn-clear" onclick="clearUrls()">Limpar</button>
+                </div>
+                <textarea
+                    id="url-textarea"
+                    class="url-textarea"
+                    placeholder="Cole as URLs aqui, uma por linha&#10;&#10;Exemplo:&#10;www.exemplo.com.br&#10;sub.dominio.com&#10;outro-site.org"
+                    spellcheck="false"
+                ></textarea>
+                <div class="url-input-footer">
+                    <span class="url-count"><strong id="url-input-count">0</strong> URLs informadas</span>
+                    <button class="btn-start" id="btn-start" onclick="startScan()" disabled>
+                        <span class="btn-icon">&#9654;</span> Iniciar Scans
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Setup Progress (phase: setup) ───────────────── -->
+        <div id="setup-section" data-phases="setup">
+            <div class="card setup-card">
+                <div class="spinner"></div>
+                <div class="setup-text">
+                    <strong id="setup-title">Executando verificacoes...</strong>
+                    <span id="setup-desc">Coletando credenciais e consultando API Qualys</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Export Alert ─────────────────────────────────── -->
+        <div class="export-alert" id="export-alert" data-phases="finished">
+            <span class="alert-icon">&#9888;</span>
+            <span class="alert-text" id="export-alert-text"></span>
+            <button class="alert-close" onclick="document.getElementById('export-alert').classList.remove('visible')">&times;</button>
+        </div>
+
+        <!-- ── Export Bar (phase: finished) ─────────────────── -->
+        <div id="export-section" data-phases="finished">
+            <div class="card export-bar">
+                <span class="export-info">Scans concluidos! Export dos resultados disponivel.</span>
+                <div class="export-actions">
+                    <button class="btn-export" id="btn-export-csv" onclick="exportResultsCsv()">
+                        &#128196; Baixar CSV
+                    </button>
+                    <button class="btn-start" id="btn-restart" onclick="restartRoutine()">
+                        &#8635; Iniciar Nova Rotina
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Add URLs (phase: running) ───────────────────── -->
+        <div id="add-urls-section" data-phases="running finished">
+            <div class="card add-urls-card">
+                <div class="add-urls-header">
+                    <span class="section-title">Adicionar mais URL's</span>
+                </div>
+                <div class="add-urls-body">
+                    <textarea
+                        id="add-urls-textarea"
+                        placeholder="Cole URLs adicionais aqui, uma por linha..."
+                        spellcheck="false"
+                    ></textarea>
+                    <button class="btn-start" id="btn-add-urls" onclick="addMoreUrls()" style="white-space: nowrap;">
+                        + Adicionar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Summary Cards (phase: ready, setup, running, finished) ── -->
+        <div class="summary-grid" id="summary-section" data-phases="ready setup running finished">
+            <div class="card summary-card total">
+                <div class="card-value" id="total-count">0</div>
+                <div class="card-label" id="label-total">Total</div>
+            </div>
+            <div class="card summary-card scanning">
+                <div class="card-value" id="scanning-count">0</div>
+                <div class="card-label" id="label-scanning">Em Scan</div>
+            </div>
+            <div class="card summary-card completed">
+                <div class="card-value" id="completed-count">0</div>
+                <div class="card-label" id="label-completed">Concluidas</div>
+            </div>
+            <div class="card summary-card skipped" onclick="scrollToErrors()" style="cursor:pointer;" title="Ver erros e avisos">
+                <div class="card-value" id="skipped-count">0</div>
+                <div class="card-label" id="label-skipped">Erros/Ignoradas &#8595;</div>
+            </div>
+            <div class="card summary-card pending">
+                <div class="card-value" id="pending-count">0</div>
+                <div class="card-label" id="label-pending">Na Fila</div>
+            </div>
+        </div>
+
+        <!-- ── Workers & Pending (phase: ready, running, finished) ── -->
+        <div class="content-grid" id="monitor-section" data-phases="ready running finished">
+            <div class="card">
+                <div class="section-header">
+                    <span class="section-title">Workers Ativos</span>
+                </div>
+                <table class="data-table">
+                    <thead><tr><th>Worker</th><th>Status</th><th>URL</th></tr></thead>
+                    <tbody id="workers-body">
+                        <tr><td colspan="3"><div class="empty-state"><span class="empty-icon">&#9881;</span>Aguardando...</div></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="card">
+                <div class="section-header">
+                    <span class="section-title">Fila de Espera</span>
+                    <span class="section-count" id="pending-badge">0</span>
+                </div>
+                <div class="url-list" id="pending-list">
+                    <div class="empty-state"><span class="empty-icon">&#128203;</span>Nenhuma URL na fila</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Completed URLs (phase: ready, running, finished) ── -->
+        <div id="results-section" data-phases="ready running finished" style="margin-bottom:12px;">
+            <div class="card">
+                <div class="section-header">
+                    <span class="section-title">URLs Concluidas</span>
+                    <span class="section-count" id="completed-badge">0</span>
+                </div>
+                <div class="url-list" id="completed-list">
+                    <div class="empty-state"><span class="empty-icon">&#10003;</span>Nenhum scan concluido</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Errors & Warnings (phase: ready, running, finished) ── -->
+        <div id="errors-section" data-phases="ready running finished" style="margin-bottom:12px;">
+            <div class="card errors-card">
+                <div class="section-header">
+                    <span class="section-title">Erros & Avisos</span>
+                    <span class="section-count" id="skipped-badge">0</span>
+                </div>
+                <div class="errors-body" id="errors-body">
+                    <div class="empty-state"><span class="empty-icon">&#10003;</span>Nenhum erro ou aviso</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Reports Generated (phase: ready, running, finished) ── -->
+        <div id="reports-section" data-phases="ready running finished" style="margin-bottom:12px;">
+            <div class="card">
+                <div class="section-header">
+                    <span class="section-title">Reports Gerados</span>
+                    <span class="section-count" id="reports-badge">0</span>
+                </div>
+                <div class="url-list" id="reports-list">
+                    <div class="empty-state"><span class="empty-icon">&#128196;</span>Nenhum report gerado</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Log Monitor (always visible) ────────────────── -->
+        <div id="log-section" data-phases="auth ready setup running finished">
+            <div class="card log-card">
+                <div class="log-card-header">
+                    <div class="section-header">
+                        <span class="section-title">Monitor de Logs</span>
+                        <span class="section-count" id="log-count">0 linhas</span>
+                    </div>
+                </div>
+                <div class="log-container" id="log-container">
+                    <div class="log-line" style="color: var(--text-muted);">Aguardando logs...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        Qualys Schedule Monitor &mdash; Atualiza automaticamente a cada 3 segundos
+    </div>
+
+    <!-- ── Report Side Panel ──────────────────────────────── -->
+    <div class="report-panel" id="report-panel">
+        <div class="report-panel-header">
+            <span id="report-panel-title">Download de Relatorio</span>
+            <button class="report-panel-close" onclick="closeReportPanel()" title="Fechar">&times;</button>
+        </div>
+        <div class="report-panel-body" id="report-panel-body"></div>
+        <div class="report-panel-log" id="report-panel-log"></div>
+        <div class="report-panel-footer">
+            <button class="btn-sm" onclick="closeReportPanel()">Fechar</button>
+        </div>
+    </div>
+
+    <script>
+        /* ── Theme ─────────────────────────────────────────── */
+        function initTheme() {
+            var saved = localStorage.getItem('qualys-theme') || 'light';
+            document.documentElement.setAttribute('data-theme', saved);
+            updateThemeIcon(saved);
+        }
+
+        function toggleTheme() {
+            var current = document.documentElement.getAttribute('data-theme');
+            var next = current === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('qualys-theme', next);
+            updateThemeIcon(next);
+        }
+
+        function updateThemeIcon(theme) {
+            document.getElementById('theme-icon').innerHTML = theme === 'dark' ? '&#9788;' : '&#9790;';
+        }
+
+        initTheme();
+
+        /* ── CSRF Token ───────────────────────────────────── */
+        var _csrfToken = '';
+        async function fetchCsrfToken() {
+            try {
+                var res = await fetch('/api/csrf-token');
+                var data = await res.json();
+                if (data.ok) _csrfToken = data.token;
+            } catch(e) {}
+        }
+        function csrfHeaders(extra) {
+            var h = { 'Content-Type': 'application/json', 'X-CSRF-Token': _csrfToken };
+            if (extra) for (var k in extra) h[k] = extra[k];
+            return h;
+        }
+        fetchCsrfToken();
+
+        /* ── Auth ──────────────────────────────────────────── */
+        var authUser = document.getElementById('auth-user');
+        var authPass = document.getElementById('auth-pass');
+        var authToken = document.getElementById('auth-token');
+        var btnAuth = document.getElementById('btn-auth');
+        var authError = document.getElementById('auth-error');
+
+        // Submit on Enter in any auth field
+        [authUser, authPass, authToken].forEach(function(el) {
+            el.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') submitAuth();
+            });
+        });
+
+        async function submitAuth() {
+            var user = authUser.value.trim();
+            var pass = authPass.value.trim();
+            var token = authToken.value.trim();
+
+            if (!user || !pass) {
+                authError.textContent = 'Preencha login e senha.';
+                authError.classList.add('visible');
+                return;
+            }
+
+            authError.classList.remove('visible');
+            btnAuth.disabled = true;
+            btnAuth.textContent = 'Autenticando...';
+
+            try {
+                var res = await fetch('/api/auth', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: user, password: pass, token: token })
+                });
+                var data = await res.json();
+                if (data.ok) {
+                    fetchCsrfToken();
+                } else {
+                    authError.textContent = 'Falha na autenticacao. Verifique as credenciais.';
+                    authError.classList.add('visible');
+                    btnAuth.disabled = false;
+                    btnAuth.textContent = 'Entrar';
+                }
+            } catch (e) {
+                authError.textContent = 'Erro de conexao com o servidor.';
+                authError.classList.add('visible');
+                btnAuth.disabled = false;
+                btnAuth.textContent = 'Entrar';
+            }
+        }
+
+        /* ── URL Input ─────────────────────────────────────── */
+        var textarea = document.getElementById('url-textarea');
+        var btnStart = document.getElementById('btn-start');
+        var urlCountEl = document.getElementById('url-input-count');
+
+        function getUrlsFromTextarea() {
+            return textarea.value.split('\n').map(function(u) { return u.trim(); }).filter(function(u) { return u.length > 0; });
+        }
+
+        textarea.addEventListener('input', function() {
+            var count = getUrlsFromTextarea().length;
+            urlCountEl.textContent = count;
+            btnStart.disabled = count === 0;
+        });
+
+        function clearUrls() {
+            textarea.value = '';
+            urlCountEl.textContent = '0';
+            btnStart.disabled = true;
+            textarea.focus();
+        }
+
+        /* ── Start Scan ────────────────────────────────────── */
+        async function startScan() {
+            var urls = getUrlsFromTextarea();
+            if (urls.length === 0) return;
+
+            btnStart.disabled = true;
+            btnStart.innerHTML = '<div class="spinner" style="width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.8s linear infinite;"></div> Iniciando...';
+
+            try {
+                var res = await fetch('/api/start', {
+                    method: 'POST',
+                    headers: csrfHeaders(),
+                    body: JSON.stringify({ urls: urls })
+                });
+                var data = await res.json();
+                if (!data.ok) {
+                    btnStart.disabled = false;
+                    btnStart.innerHTML = '<span class="btn-icon">&#9654;</span> Iniciar Scans';
+                }
+            } catch (e) {
+                btnStart.disabled = false;
+                btnStart.innerHTML = '<span class="btn-icon">&#9654;</span> Iniciar Scans';
+            }
+        }
+
+        /* ── Add More URLs ─────────────────────────────────── */
+        async function addMoreUrls() {
+            var addTextarea = document.getElementById('add-urls-textarea');
+            var urls = addTextarea.value.split('\n').map(function(u) { return u.trim(); }).filter(function(u) { return u.length > 0; });
+            if (urls.length === 0) return;
+
+            var btn = document.getElementById('btn-add-urls');
+            btn.disabled = true;
+            btn.textContent = 'Adicionando...';
+
+            try {
+                var res = await fetch('/api/add-urls', {
+                    method: 'POST',
+                    headers: csrfHeaders(),
+                    body: JSON.stringify({ urls: urls })
+                });
+                var data = await res.json();
+                if (data.ok) {
+                    addTextarea.value = '';
+                    btn.textContent = data.added + ' adicionada(s)';
+                    setTimeout(function() {
+                        btn.textContent = '+ Adicionar';
+                        btn.disabled = false;
+                    }, 2000);
+                } else {
+                    btn.textContent = data.error || 'Erro desconhecido';
+                    btn.style.fontSize = '11px';
+                    setTimeout(function() {
+                        btn.textContent = '+ Adicionar';
+                        btn.style.fontSize = '';
+                        btn.disabled = false;
+                    }, 3000);
+                }
+            } catch (e) {
+                btn.textContent = '+ Adicionar';
+                btn.disabled = false;
+            }
+        }
+
+        /* ── Restart Routine ───────────────────────────────── */
+        async function restartRoutine() {
+            var btn = document.getElementById('btn-restart');
+            btn.disabled = true;
+            btn.textContent = 'Reiniciando...';
+
+            try {
+                var res = await fetch('/api/restart', { method: 'POST', headers: csrfHeaders() });
+                var data = await res.json();
+                if (data.ok) {
+                    lastLogCount = 0;
+                }  else {
+                    btn.textContent = 'Erro';
+                    setTimeout(function() {
+                        btn.innerHTML = '&#8635; Iniciar Nova Rotina';
+                        btn.disabled = false;
+                    }, 2000);
+                }
+            } catch (e) {
+                btn.innerHTML = '&#8635; Iniciar Nova Rotina';
+                btn.disabled = false;
+            }
+        }
+
+        /* ── Export Results CSV ────────────────────────────── */
+        function getExportFilename() {
+            // Use month_ref from API data (YYYY-MM) or fallback to current date
+            var ref = (lastState && lastState.api && lastState.api.month_ref) ? lastState.api.month_ref : '';
+            if (ref) return ref.replace('-', '') + '.csv';
+            var now = new Date();
+            var y = now.getFullYear();
+            var m = String(now.getMonth() + 1).padStart(2, '0');
+            return y + m + '.csv';
+        }
+
+        async function exportResultsCsv() {
+            var btn = document.getElementById('btn-export-csv');
+            var alertEl = document.getElementById('export-alert');
+            var alertText = document.getElementById('export-alert-text');
+            btn.disabled = true;
+            btn.innerHTML = '&#8987; Exportando...';
+            alertEl.classList.remove('visible');
+
+            try {
+                var res = await fetch('/api/export/csv');
+                if (!res.ok) {
+                    throw new Error('Servidor retornou HTTP ' + res.status);
+                }
+                var blob = await res.blob();
+                if (blob.size === 0) {
+                    throw new Error('Arquivo exportado esta vazio');
+                }
+                var filename = getExportFilename();
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                btn.innerHTML = '&#10003; Salvo!';
+                setTimeout(function() {
+                    btn.innerHTML = '&#128196; Baixar CSV';
+                    btn.disabled = false;
+                }, 2000);
+            } catch (e) {
+                alertText.textContent = 'Erro ao exportar CSV: ' + e.message;
+                alertEl.className = 'export-alert alert-danger visible';
+                btn.innerHTML = '&#128196; Baixar CSV';
+                btn.disabled = false;
+            }
+        }
+
+        /* ── Phase Visibility ──────────────────────────────── */
+        var currentPhase = 'ready';
+
+        function updateVisibility(phase) {
+            if (phase === currentPhase) return;
+            currentPhase = phase;
+            document.querySelectorAll('[data-phases]').forEach(function(el) {
+                var phases = el.getAttribute('data-phases').split(' ');
+                el.style.display = phases.includes(phase) ? '' : 'none';
+            });
+        }
+
+        // Initialize visibility
+        updateVisibility('auth');
+
+        /* ── State Polling ─────────────────────────────────── */
+        var lastLogCount = 0;
+
+        function updateDashboard(state) {
+            updateVisibility(state.phase);
+            updateStatusBadge(state.phase);
+
+            // Summary - in ready phase, show API data (scans finalized this month + workers)
+            if (state.phase === 'ready' && state.total === 0 && state.api) {
+                var apiScans = state.api.scans_detail ? state.api.scans_detail.length : 0;
+                var apiScanned = state.api.scanned_month ? state.api.scanned_month.length : 0;
+                var wEntries = Object.entries(state.workers || {});
+                var wAvail = wEntries.filter(function(e) { return e[1].status === 'available'; }).length;
+                var wBusy = wEntries.filter(function(e) { return e[1].status !== 'available'; }).length;
+                document.getElementById('total-count').textContent = apiScanned;
+                document.getElementById('scanning-count').textContent = wBusy;
+                document.getElementById('completed-count').textContent = apiScans;
+                document.getElementById('skipped-count').textContent = '0';
+                document.getElementById('pending-count').textContent = wAvail;
+                // Update labels for ready phase context
+                document.getElementById('label-total').textContent = 'URLs no Mes';
+                document.getElementById('label-scanning').textContent = 'Workers Ocupados';
+                document.getElementById('label-completed').textContent = 'Scans no Mes';
+                document.getElementById('label-skipped').textContent = 'Erros/Ignoradas';
+                document.getElementById('label-pending').textContent = 'Workers Livres';
+            } else {
+                document.getElementById('total-count').textContent = state.total;
+                document.getElementById('scanning-count').textContent = state.scanning_count;
+                document.getElementById('completed-count').textContent = state.completed_count;
+                document.getElementById('skipped-count').textContent = state.skipped_count;
+                document.getElementById('pending-count').textContent = state.pending_count;
+                // Restore default labels
+                document.getElementById('label-total').textContent = 'Total';
+                document.getElementById('label-scanning').textContent = 'Em Scan';
+                document.getElementById('label-completed').textContent = 'Concluidas';
+                document.getElementById('label-skipped').innerHTML = 'Erros/Ignoradas &#8595;';
+                document.getElementById('label-pending').textContent = 'Na Fila';
+            }
+
+            // Badges
+            document.getElementById('pending-badge').textContent = state.pending_count;
+            document.getElementById('completed-badge').textContent = state.completed_count;
+
+            // Workers
+            updateWorkers(state.workers);
+
+            // URL lists
+            updateCompletedList(state.completed, state.phase);
+            updatePendingList(state.pending);
+
+            // Errors & Warnings
+            updateErrorsSection(state.skipped, state.reports || []);
+
+            // Reports Generated
+            updateReports(state.reports || []);
+            if (state.report_validation && state.report_validation.ran) {
+                updateReportValidation(state.report_validation);
+            }
+
+            // Logs
+            updateLogs(state.logs);
+        }
+
+        function updateStatusBadge(phase) {
+            var badge = document.getElementById('status-badge');
+            var text = document.getElementById('status-text');
+            var labels = {
+                'auth': 'Autenticacao',
+                'ready': 'Aguardando inicio',
+                'setup': 'Verificando',
+                'running': 'Executando',
+                'finished': 'Concluido'
+            };
+            text.textContent = labels[phase] || phase;
+            badge.className = phase === 'setup' ? 'status-badge setup-active' : 'status-badge online';
+        }
+
+        /* ── Workers ───────────────────────────────────────── */
+        function updateWorkers(workers) {
+            var tbody = document.getElementById('workers-body');
+            var entries = Object.entries(workers);
+            if (entries.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3"><div class="empty-state"><span class="empty-icon">&#9881;</span>Aguardando...</div></td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = entries.map(function(entry) {
+                var name = entry[0];
+                var info = entry[1];
+                var statusClass = info.status || 'available';
+                var statusLabel = { 'scanning': 'Escaneando', 'waiting': 'Aguardando', 'available': 'Disponivel' }[statusClass] || statusClass;
+                var url = info.url || '-';
+                var urlDisplay = url.length > 45 ? url.substring(0, 45) + '...' : url;
+                return '<tr>'
+                    + '<td style="font-weight:600">' + escapeHtml(name) + '</td>'
+                    + '<td><span class="badge ' + escapeHtml(statusClass) + '">' + escapeHtml(statusLabel) + '</span></td>'
+                    + '<td style="font-family:monospace;font-size:12px" title="' + escapeAttr(url) + '">' + escapeHtml(urlDisplay) + '</td>'
+                    + '</tr>';
+            }).join('');
+        }
+
+        /* ── URL Lists ─────────────────────────────────────── */
+        function updateCompletedList(completed, phase) {
+            var el = document.getElementById('completed-list');
+            if (completed.length === 0) {
+                el.innerHTML = '<div class="empty-state"><span class="empty-icon">&#10003;</span>Nenhum scan concluido</div>';
+                return;
+            }
+            el.innerHTML = completed.map(function(item) {
+                var label = item.scan_label || item.url;
+                var workerInfo = escapeHtml(item.worker || '');
+                if (item.worker_id) workerInfo += ' (ID: ' + escapeHtml(String(item.worker_id)) + ')';
+                var timeInfo = '';
+                if (item.finished_date) timeInfo += escapeHtml(item.finished_date) + ' ';
+                timeInfo += escapeHtml(item.finished_at || '');
+
+                var html = '<div class="url-item completed">'
+                    + '<span class="icon">&#10003;</span>'
+                    + '<span>' + escapeHtml(label) + '</span>'
+                    + '<span class="meta">' + workerInfo + ' - ' + timeInfo;
+
+                if (item.scan_id && item.scan_id !== 'unknown') {
+                    var targetUrl = item.url || item.scan_label || '';
+                    html += ' <button class="btn-sm" onclick="downloadReport(\'' + escapeAttr(item.scan_id) + '\', this, \'' + escapeAttr(targetUrl) + '\', \'PDF\')">PDF</button>';
+                    html += ' <button class="btn-sm" onclick="downloadReport(\'' + escapeAttr(item.scan_id) + '\', this, \'' + escapeAttr(targetUrl) + '\', \'CSV\')">CSV</button>';
+                }
+
+                html += '</span></div>';
+                return html;
+            }).join('');
+        }
+
+        /* ── Errors & Warnings ────────────────────────────── */
+        function updateErrorsSection(skipped, reports) {
+            var el = document.getElementById('errors-body');
+            var badge = document.getElementById('skipped-badge');
+
+            var scanErrors = [], apiErrors = [], dnsErrors = [], reportErrors = [], ignored = [], warnings = [];
+            for (var i = 0; i < skipped.length; i++) {
+                var item = skipped[i];
+                if (item.warning === true) warnings.push(item);
+                else if (item.reason && item.reason.indexOf('lancar scan') !== -1) scanErrors.push(item);
+                else if (item.reason && item.reason.indexOf('atualizar URL') !== -1) apiErrors.push(item);
+                else if (item.reason && item.reason.indexOf('Erro DNS') !== -1) dnsErrors.push(item);
+                else if (item.reason && item.reason.indexOf('ja escaneada') !== -1) ignored.push(item);
+                else scanErrors.push(item);
+            }
+            if (reports) {
+                for (var r = 0; r < reports.length; r++) {
+                    if (reports[r].status === 'error') {
+                        reportErrors.push({ url: reports[r].scan_label || 'Report', reason: 'Erro report ' + (reports[r].format || ''), details: (reports[r].worker || '') });
+                    }
+                }
+            }
+            var total = skipped.length + reportErrors.length;
+            if (badge) badge.textContent = total;
+            if (total === 0) { el.innerHTML = '<div class="empty-state"><span class="empty-icon">&#10003;</span>Nenhum erro ou aviso</div>'; return; }
+
+            function buildBlock(title, icon, items, hdrCls, itemCls, iIcon) {
+                if (items.length === 0) return '';
+                var b = '<div class="error-block"><div class="error-block-header ' + hdrCls + '"><span class="block-icon">' + icon + '</span>' + escapeHtml(title) + '<span class="block-count">' + items.length + '</span></div>';
+                for (var k = 0; k < items.length; k++) {
+                    var it = items[k];
+                    b += '<div class="url-item ' + itemCls + '"><span class="icon">' + iIcon + '</span><span class="url-text">' + escapeHtml(it.url) + '</span><span class="meta">' + escapeHtml(it.reason) + '</span>';
+                    if (it.details) b += '<div class="error-detail">' + escapeHtml(it.details) + '</div>';
+                    b += '</div>';
+                }
+                return b + '</div>';
+            }
+
+            el.innerHTML =
+                buildBlock('Scans Nao Lancados', '&#10007;', scanErrors, 'danger', 'skipped', '&#10007;')
+                + buildBlock('Erros de Conexao com a API', '&#10007;', apiErrors, 'danger', 'skipped-api', '&#10007;')
+                + buildBlock('Erros de DNS / Rede', '&#10007;', dnsErrors, 'danger', 'skipped-dns', '&#10007;')
+                + buildBlock('Reports Nao Baixados', '&#10007;', reportErrors, 'danger', 'skipped-report', '&#10007;')
+                + buildBlock('URLs Ignoradas', '&#8709;', ignored, 'muted', 'skipped-ignored', '&#8709;')
+                + buildBlock('Avisos', '&#9888;', warnings, 'warning', 'skipped-warning', '&#9888;');
+        }
+
+        /* ── Reports Generated ────────────────────────────── */
+        function updateReports(reports) {
+            var el = document.getElementById('reports-list');
+            var badge = document.getElementById('reports-badge');
+            if (badge) badge.textContent = reports.length;
+            if (reports.length === 0) { el.innerHTML = '<div class="empty-state"><span class="empty-icon">&#128196;</span>Nenhum report gerado</div>'; return; }
+            el.innerHTML = reports.map(function(r) {
+                var statusLabels = { 'downloading': 'Baixando...', 'done': 'Concluido', 'error': 'Erro', 'retrying': 'Retentando...' };
+                var statusLabel = statusLabels[r.status] || r.status;
+                var info = escapeHtml(r.worker) + ' - ' + escapeHtml(r.format);
+                if (r.size_kb > 0) info += ' (' + r.size_kb + ' KB)';
+                if (r.retry_count > 0) info += ' [retry ' + r.retry_count + ']';
+                if (r.error_message && r.status === 'error') info += ' - ' + escapeHtml(r.error_message);
+                var timeInfo = escapeHtml(r.started_at || '');
+                if (r.finished_at) timeInfo += ' - ' + escapeHtml(r.finished_at);
+                var itemClass = r.status === 'done' ? 'completed' : r.status === 'error' ? 'skipped' : 'pending';
+                var icon = r.status === 'done' ? '&#128196;' : r.status === 'error' ? '&#10007;' : '&#8987;';
+                return '<div class="url-item ' + itemClass + '">'
+                    + '<span class="icon">' + icon + '</span>'
+                    + '<span>' + escapeHtml(r.scan_label || '') + '</span>'
+                    + '<span class="meta"><span class="badge ' + escapeHtml(r.status || 'downloading') + '">' + escapeHtml(statusLabel) + '</span> ' + info + ' ' + timeInfo + '</span></div>';
+            }).join('');
+        }
+
+        function updateReportValidation(v) {
+            var badge = document.getElementById('reports-badge');
+            if (!badge || !v || !v.ran) return;
+            var parts = [];
+            if (v.still_missing_count > 0) parts.push(v.still_missing_count + ' faltando');
+            if (v.recovered_count > 0) parts.push(v.recovered_count + ' recuperado(s)');
+            if (v.empty_reports && v.empty_reports.length > 0) parts.push(v.empty_reports.length + ' sem achados');
+            if (parts.length > 0) {
+                badge.textContent += ' (' + parts.join(', ') + ')';
+                if (v.still_missing_count > 0) {
+                    badge.style.background = 'var(--danger-light, #fce4ec)';
+                    badge.style.color = 'var(--danger, #e53935)';
+                } else {
+                    badge.style.background = 'var(--warning-light, #fff3e0)';
+                    badge.style.color = 'var(--warning, #f57c00)';
+                }
+            }
+            if (v.empty_reports && v.empty_reports.length > 0) {
+                var container = document.getElementById('reports-list');
+                if (container) {
+                    var emptyHtml = '<div style="margin-top:12px;padding:10px 14px;background:var(--warning-light,#fff3e0);border-left:3px solid var(--warning,#f57c00);border-radius:6px;">'
+                        + '<strong style="color:var(--warning,#f57c00);">&#9888; Scans sem achados (' + v.empty_reports.length + '):</strong>'
+                        + '<ul style="margin:6px 0 0 16px;padding:0;list-style:disc;">';
+                    v.empty_reports.forEach(function(er) {
+                        emptyHtml += '<li style="margin:2px 0;font-size:13px;">' + escapeHtml(er.scan_label) + ' <span style="opacity:.7">(' + escapeHtml(er.summary || '') + ')</span></li>';
+                    });
+                    emptyHtml += '</ul></div>';
+                    container.innerHTML += emptyHtml;
+                }
+            }
+        }
+
+        function scrollToErrors() {
+            var el = document.getElementById('errors-section');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        /* ── Report Side Panel ────────────────────────────── */
+        var reportDownloading = {};
+
+        function openReportPanel(scanId, scanTarget) {
+            var panel = document.getElementById('report-panel');
+            document.getElementById('report-panel-title').textContent = 'Scan ' + scanId;
+            document.getElementById('report-panel-body').innerHTML =
+                '<div class="report-step pending" id="rs-create"><div class="report-step-icon">1</div><div class="report-step-content"><div class="report-step-title">Criar relatorio</div><div class="report-step-detail" id="rs-create-detail">Aguardando...</div></div></div>'
+                + '<div class="report-step pending" id="rs-status"><div class="report-step-icon">2</div><div class="report-step-content"><div class="report-step-title">Aguardar processamento</div><div class="report-step-detail" id="rs-status-detail">Aguardando...</div></div></div>'
+                + '<div class="report-step pending" id="rs-download"><div class="report-step-icon">3</div><div class="report-step-content"><div class="report-step-title">Baixar arquivo</div><div class="report-step-detail" id="rs-download-detail">Aguardando...</div></div></div>';
+            document.getElementById('report-panel-log').innerHTML = '';
+            reportLog('info', 'Scan ID: ' + scanId);
+            if (scanTarget) reportLog('info', 'Target: ' + scanTarget);
+            panel.classList.add('active');
+        }
+
+        function closeReportPanel() { document.getElementById('report-panel').classList.remove('active'); }
+
+        function reportLog(type, msg) {
+            var log = document.getElementById('report-panel-log'); if (!log) return;
+            var cls = type === 'ok' ? 'ok' : type === 'err' ? 'err' : 'info';
+            log.innerHTML += '<div class="report-log-line ' + cls + '">[' + new Date().toLocaleTimeString('pt-BR') + '] ' + escapeHtml(msg) + '</div>';
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function setStepState(stepId, state, detail) {
+            var el = document.getElementById(stepId); if (!el) return;
+            el.className = 'report-step ' + state;
+            var iconEl = el.querySelector('.report-step-icon');
+            if (state === 'running') iconEl.innerHTML = '&#8987;';
+            else if (state === 'success') iconEl.innerHTML = '&#10003;';
+            else if (state === 'error') iconEl.innerHTML = '&#10007;';
+            var detailEl = document.getElementById(stepId + '-detail');
+            if (detailEl && detail) detailEl.textContent = detail;
+        }
+
+        function extractUrlPort(target) {
+            if (!target) return { url: '', port: '', yyyymm: '' };
+            var parts = target.trim().split(/\s+/);
+            if (parts.length >= 3 && /^\d{8}$/.test(parts[0])) return { url: parts[1], port: parts[parts.length - 1], yyyymm: parts[0].substring(0, 6) };
+            if (parts.length === 2 && /^\d{8}$/.test(parts[0])) return { url: parts[1], port: '', yyyymm: parts[0].substring(0, 6) };
+            var clean = target.trim().replace(/^https?:\/\//, '').split('/')[0];
+            var pm = clean.match(/:(\d+)$/);
+            return pm ? { url: clean.replace(/:(\d+)$/, ''), port: pm[1], yyyymm: '' } : { url: clean, port: '', yyyymm: '' };
+        }
+
+        function buildReportFileName(scanTarget) {
+            var info = extractUrlPort(scanTarget);
+            var ym = info.yyyymm || (new Date().getFullYear() + String(new Date().getMonth() + 1).padStart(2, '0'));
+            var name = ym;
+            if (info.url) name += ' ' + info.url;
+            if (info.port) name += ' ' + info.port;
+            return name + '.pdf';
+        }
+
+        async function safeJson(res) {
+            try { var text = await res.text(); return text ? JSON.parse(text) : { ok: false, error: 'Vazia' }; }
+            catch (e) { return { ok: false, error: 'Invalida' }; }
+        }
+
+        async function downloadReport(scanId, btnEl, scanTarget, fmt) {
+            fmt = (fmt || 'PDF').toUpperCase();
+            var dlKey = scanId + '_' + fmt;
+            if (!scanId || reportDownloading[dlKey]) return;
+            reportDownloading[dlKey] = true;
+            var btnLabel = fmt;
+            if (btnEl) { btnEl.disabled = true; btnEl.textContent = 'Baixando...'; }
+            openReportPanel(scanId, scanTarget);
+            try {
+                setStepState('rs-create', 'running', 'Criando ' + fmt + '...');
+                var res1 = await fetch('/api/report/create/' + encodeURIComponent(scanId), { method: 'POST', headers: csrfHeaders(), body: JSON.stringify({ scan_target: scanTarget || '', format: fmt }) });
+                var data1 = await safeJson(res1);
+                if (!data1.ok || !data1.report_id) { throw new Error(data1.error || 'Falha'); }
+                var reportId = data1.report_id;
+                setStepState('rs-create', 'success', 'ID: ' + reportId);
+                reportLog('ok', 'Report criado: ' + reportId);
+
+                setStepState('rs-status', 'running', 'Verificando...');
+                var ready = false;
+                for (var p = 1; p <= 60; p++) {
+                    var res2 = await fetch('/api/report/status/' + encodeURIComponent(reportId));
+                    var d2 = await safeJson(res2);
+                    var st = (d2 && d2.status) ? d2.status : '???';
+                    setStepState('rs-status', 'running', st + ' (' + p + '/60)');
+                    reportLog('info', p + ': ' + st);
+                    if (st === 'Finished' || st === 'COMPLETE') { ready = true; break; }
+                    if (st === 'ERROR' || st === 'FAILED' || st === 'Errors' || st === 'CANCELLED') throw new Error(st);
+                    await new Promise(function(r) { setTimeout(r, 5000); });
+                }
+                if (!ready) throw new Error('Timeout');
+                setStepState('rs-status', 'success', 'Pronto');
+
+                setStepState('rs-download', 'running', 'Baixando...');
+                var res3 = await fetch('/api/report/download/' + encodeURIComponent(reportId));
+                if (res3.ok) {
+                    var blob = await res3.blob();
+                    var fn = buildReportFileName(scanTarget);
+                    if (fmt === 'CSV') fn = fn.replace('.pdf', '.csv');
+                    var url = URL.createObjectURL(blob);
+                    var a = document.createElement('a'); a.href = url; a.download = fn; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+                    setStepState('rs-download', 'success', (blob.size/1024).toFixed(1) + ' KB');
+                    reportLog('ok', fn);
+                    if (btnEl) { btnEl.textContent = 'Salvo'; btnEl.className = 'btn-sm btn-success'; }
+                    setTimeout(function() { delete reportDownloading[dlKey]; if (btnEl) { btnEl.textContent = btnLabel; btnEl.disabled = false; btnEl.className = 'btn-sm'; } }, 3000);
+                    return;
+                }
+                throw new Error((await safeJson(res3)).error || 'Erro');
+            } catch (e) {
+                reportLog('err', e.message);
+                if (btnEl) { btnEl.textContent = 'Erro'; }
+                setTimeout(function() { delete reportDownloading[dlKey]; if (btnEl) { btnEl.textContent = btnLabel; btnEl.disabled = false; } }, 5000);
+            }
+        }
+
+        var lastState = null;
+
+        function updatePendingList(pending) {
+            var el = document.getElementById('pending-list');
+            if (pending.length === 0) {
+                el.innerHTML = '<div class="empty-state"><span class="empty-icon">&#128203;</span>Nenhuma URL na fila</div>';
+                return;
+            }
+            el.innerHTML = pending.map(function(url) {
+                return '<div class="url-item pending">'
+                    + '<span class="icon">&#9679;</span>'
+                    + escapeHtml(url)
+                    + '</div>';
+            }).join('');
+        }
+
+        /* ── Logs ──────────────────────────────────────────── */
+        function updateLogs(logs) {
+            var container = document.getElementById('log-container');
+            var countEl = document.getElementById('log-count');
+
+            if (logs.length === 0) {
+                container.innerHTML = '<div class="log-line" style="color: var(--text-muted);">Aguardando logs...</div>';
+                countEl.textContent = '0 linhas';
+                return;
+            }
+
+            countEl.textContent = logs.length + ' linhas';
+
+            if (logs.length !== lastLogCount) {
+                container.innerHTML = logs.map(function(log) {
+                    var cls = '';
+                    var msg = log.message;
+                    if (msg.indexOf('ERRO') !== -1 || msg.indexOf('Falha') !== -1 || msg.indexOf('TIMEOUT') !== -1 || msg.indexOf('Erro DNS') !== -1) cls = 'error';
+                    else if (msg.indexOf('Scan lancado') !== -1 || msg.indexOf('finalizado') !== -1 || msg.indexOf('CONCLUIDO') !== -1) cls = 'success';
+                    else if (msg.indexOf('Aguardando') !== -1 || msg.indexOf('Pulando') !== -1 || msg.indexOf('Default porta') !== -1) cls = 'warning';
+                    return '<div class="log-line ' + cls + '"><span class="ts">[' + log.timestamp + ']</span>' + escapeHtml(msg) + '</div>';
+                }).join('');
+
+                container.scrollTop = container.scrollHeight;
+                lastLogCount = logs.length;
+            }
+        }
+
+        /* ── Security Helpers ──────────────────────────────── */
+        function escapeHtml(text) {
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function escapeAttr(text) {
+            return text.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+
+        /* ── State Polling (updated to store lastState) ────── */
+        async function fetchState() {
+            try {
+                var res = await fetch('/api/state');
+                if (!res.ok) return;
+                var state = await res.json();
+                lastState = state;
+                updateDashboard(state);
+            } catch (e) { /* connection lost */ }
+        }
+
+        /* ── Polling ───────────────────────────────────────── */
+        fetchState();
+        setInterval(fetchState, 3000);
+    </script>
+
+</body>
+</html>
